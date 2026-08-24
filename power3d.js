@@ -40,6 +40,7 @@
   let selectionRing;
   let selectionBeam;
   let selectionMarker;
+  let hoveredId = null;
 
   function transformerX(index) {
     return -9 + index * 1.95;
@@ -204,6 +205,7 @@
     const label = makeLabel(options.label || '');
     label.position.set(0, h / 2 + 0.62, 0);
     label.userData.cabinet = group;
+    label.visible = false;
     group.add(label);
 
     group.userData = {
@@ -213,7 +215,8 @@
       bodyMat,
       ledMat,
       screenMat,
-      plateMat
+      plateMat,
+      labelSprite: label
     };
 
     group.traverse(object => {
@@ -274,6 +277,7 @@
     const label = makeLabel(options.label || '', 2.0);
     label.position.set(0, 1.65, 0);
     label.userData.cabinet = group;
+    label.visible = false;
     group.add(label);
 
     group.position.set(options.x, 0, options.z);
@@ -284,7 +288,8 @@
       loadMat,
       ledMat: loadMat,
       screenMat: null,
-      plateMat: null
+      plateMat: null,
+      labelSprite: label
     };
     group.traverse(object => {
       if (object.isMesh) object.userData.cabinet = group;
@@ -738,7 +743,19 @@
       );
       raycaster.setFromCamera(pointer, camera);
       const hits = raycaster.intersectObjects(scene.children, true);
-      renderer.domElement.style.cursor = hits.some(hit => findRouteId(hit.object)) ? 'pointer' : 'grab';
+      const hit = hits.find(item => findRouteId(item.object));
+      const nextHover = hit ? findRouteId(hit.object) : null;
+      if (nextHover !== hoveredId) {
+        hoveredId = nextHover;
+        refreshLabels();
+      }
+      renderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
+    });
+    renderer.domElement.addEventListener('pointerleave', () => {
+      if (hoveredId) {
+        hoveredId = null;
+        refreshLabels();
+      }
     });
 
     resize();
@@ -755,6 +772,17 @@
       node = node.parent;
     }
     return null;
+  }
+
+  function refreshLabels() {
+    cabinets.forEach(cabinet => {
+      const sprite = cabinet.userData.labelSprite;
+      if (!sprite) return;
+      const id = cabinet.userData.routeId;
+      const isHover = Boolean(hoveredId && id && id === hoveredId);
+      const isSelected = Boolean(selectedRouteId && id === selectedRouteId && cabinet.userData.kind === 'transformer');
+      sprite.visible = isHover || isSelected;
+    });
   }
 
   function selectRouteById(id) {
@@ -797,6 +825,7 @@
       selectionMarker.position.z = -4.4;
       selectionMarker.visible = true;
     }
+    refreshLabels();
     const route = ROUTES.find(item => item.id === selectedRouteId) || ROUTES[0];
     if (hud.title) hud.title.textContent = route.title;
     if (hud.meta) hud.meta.textContent = route.path;

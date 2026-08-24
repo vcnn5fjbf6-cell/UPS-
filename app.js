@@ -465,6 +465,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       { id: '9', name: '9#UPS1-3', routeId: '9', transformer: '9#变', input: '9AA6 / 9AA7', output: '9UPS输出', load: 'CH3 / 5#冷机备用' },
       { id: '10', name: '10#UPS', routeId: '10', transformer: '10#变', input: '10AA7', output: '10AA8', load: '楼控DDC / 大屏 / 环控' }
     ];
+    window.upsMonitorDevices = upsDevices;
 
     function nowLabel() {
       const d = new Date();
@@ -691,6 +692,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       const health = state.fault ? '逆变异常' : state.lowBattery ? '需关注' : '运行正常';
 
       selectedUpsDevice = device;
+      if (window.UPSFleet3D) window.UPSFleet3D.setDevice(device.id);
 
       if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}`;
       if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health}`;
@@ -1306,6 +1308,8 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       syncSidebar();
       updateTopology();
       if (window.UPS3D) window.UPS3D.update(state);
+      if (window.UPSFleet3D) window.UPSFleet3D.update(state);
+      if (window.UPSArch3D) window.UPSArch3D.update(state);
     }
 
     els.loginTab.addEventListener('click', () => setAuthMode('login'));
@@ -1385,3 +1389,4 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     aiTimer = state.settings.autoAi ? setInterval(() => runAiInspection(false), Math.max(3, state.settings.aiInterval) * 1000) : null;
     pushLog('info', '平台启动', 'UPS 监控管理平台已上线，开始实时采样。');
     window.selectUpsRoute = selectRoute;
+    window.selectUpsDevice = showUpsStatus;

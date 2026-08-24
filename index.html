@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>华为UPS监控管理平台</title>
+  <title>UPS监控管理平台</title>
   <link rel="stylesheet" href="styles.css" />
 
 </head>
@@ -11,8 +11,8 @@
   <section class="login-screen" aria-label="账号登录访问">
     <div class="login-card">
       <div class="login-brand">
-        <h1>华为UPS监控管理平台</h1>
-        <p>请输入账号进入系统，也可以创建新的值班账号。默认管理员：admin / admin123</p>
+        <h1>UPS监控管理平台</h1>
+        <p>请输入账号进入系统，也可以创建新的值班账号。</p>
       </div>
 
       <div class="auth-tabs" role="tablist" aria-label="登录与创建账号">
@@ -20,14 +20,14 @@
         <button class="auth-tab" id="registerTab" type="button" role="tab" aria-selected="false">创建账号</button>
       </div>
 
-      <form class="auth-form active" id="loginForm">
+      <form class="auth-form active" id="loginForm" autocomplete="off">
         <div class="auth-field">
           <label for="loginUsername">用户名</label>
-          <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="admin" required />
+          <input id="loginUsername" name="username" type="text" autocomplete="off" required />
         </div>
         <div class="auth-field">
           <label for="loginPassword">密码</label>
-          <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="admin123" required />
+          <input id="loginPassword" name="password" type="password" autocomplete="off" required />
         </div>
         <button class="primary" type="submit">进入监控系统</button>
       </form>
@@ -56,7 +56,7 @@
   <div class="shell">
     <header class="topbar">
       <div class="brand">
-        <h1>华为UPS监控管理平台</h1>
+        <h1>UPS监控管理平台</h1>
         <p>华为品牌 UPS 的实物运行状态、断电检测、故障预警与 AI 巡检统一监控</p>
       </div>
       <div class="live-strip">
@@ -188,7 +188,7 @@
               <div class="distribution-head">
                 <div>
                   <strong>配电架构总览</strong>
-                  <span>按附件配电图分为 1# - 10# 变区域，选中后下方展示该变压器真实走向。</span>
+                  <span>按附件配电图分为 1# - 10# 变区域，点击 3D 实物可查看该变压器真实走向。</span>
                 </div>
                 <div class="topology-legend">
                   <span class="legend-item"><span class="legend-swatch green"></span>正常供电</span>
@@ -197,7 +197,15 @@
                   <span class="legend-item"><span class="legend-swatch blue"></span>监控采集</span>
                 </div>
               </div>
-              <div class="distribution-map" id="distributionMap"></div>
+              <div class="power3d-wrap" id="power3dWrap">
+                <div id="power3dContainer" aria-label="配电架构 3D 模拟实物展示"></div>
+                <div class="power3d-hud">
+                  <div class="power3d-hud-title" id="power3dHudTitle">1#变（2000KVA）</div>
+                  <div class="power3d-hud-meta" id="power3dHudMeta">市电进线 / 补偿 / ATS / 1#UPS</div>
+                  <div class="power3d-hud-status" id="power3dHudStatus">在线供电 · 电池 96%</div>
+                  <div class="power3d-hud-hint">拖拽旋转 · 滚轮缩放 · 点击变压器查看走向</div>
+                </div>
+              </div>
             </div>
             <div class="power-3d-stage" id="powerStage" aria-label="UPS、变压器、ATS、电池、旁路与负载的3D连接拓扑">
               <div class="power-rail">
@@ -731,7 +739,10 @@
     </div>
   </div>
 
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
   <script src="app.js"></script>
+  <script src="power3d.js"></script>
 
 </body>
 </html>

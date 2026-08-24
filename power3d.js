@@ -1,0 +1,940 @@
+(function () {
+  'use strict';
+
+  const container = document.getElementById('power3dContainer');
+  if (!container) return;
+
+  const hud = {
+    title: document.getElementById('power3dHudTitle'),
+    meta: document.getElementById('power3dHudMeta'),
+    status: document.getElementById('power3dHudStatus')
+  };
+
+  const ROUTES = Array.isArray(window.upsMonitorRoutes) ? window.upsMonitorRoutes : [];
+  if (!ROUTES.length || !window.THREE) {
+    container.innerHTML = '<div class="power3d-fallback">3D 场景加载失败</div>';
+    return;
+  }
+
+  const COLORS = {
+    ok: 0x49d17d,
+    warn: 0xf2b84c,
+    bad: 0xff6363,
+    info: 0x63b3ff,
+    steel: 0x1c2a38,
+    steelDark: 0x0e1720,
+    white: 0xe8eef7
+  };
+
+  let scene;
+  let camera;
+  let renderer;
+  let controls;
+  let raycaster;
+  let selectedRouteId = '1';
+  let mainBusMat;
+  let mainBusCurve;
+  const mainBusParticles = [];
+  const cabinets = [];
+  const routePaths = [];
+  let selectionRing;
+  let selectionBeam;
+  let selectionMarker;
+
+  function transformerX(index) {
+    return -9 + index * 1.95;
+  }
+
+  function makeLabel(text, scale) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 512, 128);
+    ctx.fillStyle = 'rgba(7, 13, 20, 0.88)';
+    ctx.beginPath();
+    ctx.moveTo(24, 10);
+    ctx.lineTo(488, 10);
+    ctx.quadraticCurveTo(502, 10, 502, 24);
+    ctx.lineTo(502, 104);
+    ctx.quadraticCurveTo(502, 118, 488, 118);
+    ctx.lineTo(24, 118);
+    ctx.quadraticCurveTo(10, 118, 10, 104);
+    ctx.lineTo(10, 24);
+    ctx.quadraticCurveTo(10, 10, 24, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(99, 179, 255, 0.42)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = '#e8eef7';
+    ctx.font = '600 44px "Microsoft YaHei", "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 256, 66);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false
+    });
+    const sprite = new THREE.Sprite(material);
+    const width = scale || Math.max(2.2, text.length * 0.36);
+    sprite.scale.set(width, width * 0.25, 1);
+    return sprite;
+  }
+
+  function createCabinet(options) {
+    const group = new THREE.Group();
+    const w = options.w || 1.7;
+    const h = options.h || 2.1;
+    const d = options.d || 1.05;
+
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: COLORS.steel,
+      metalness: 0.72,
+      roughness: 0.32
+    });
+    const darkMetal = new THREE.MeshStandardMaterial({
+      color: COLORS.steelDark,
+      metalness: 0.62,
+      roughness: 0.52
+    });
+    const panelMat = new THREE.MeshStandardMaterial({
+      color: 0x101a24,
+      metalness: 0.5,
+      roughness: 0.58
+    });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bodyMat);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    const capMat = new THREE.MeshStandardMaterial({
+      color: 0x243747,
+      metalness: 0.6,
+      roughness: 0.42
+    });
+    const capW = 0.08;
+    [-w / 2 + capW / 2, w / 2 - capW / 2].forEach(x => {
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(capW, h, d), capMat);
+      cap.position.x = x;
+      group.add(cap);
+    });
+
+    const doorH = h * 0.72;
+    const doorW = w * 0.43;
+    const doorZ = d / 2 + 0.035;
+    [-1, 1].forEach(side => {
+      const door = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.05), panelMat);
+      door.position.set(side * w * 0.23, -h * 0.05, doorZ);
+      group.add(door);
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.34, 0.05), darkMetal);
+      handle.position.set(side * w * 0.42, -h * 0.02, doorZ + 0.04);
+      group.add(handle);
+    });
+
+    const ventMat = new THREE.MeshStandardMaterial({
+      color: 0x0b1118,
+      metalness: 0.3,
+      roughness: 0.85
+    });
+    for (let i = 0; i < 5; i += 1) {
+      const vent = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 0.045, 0.02), ventMat);
+      vent.position.set(0, -h * 0.3 + i * 0.11, doorZ + 0.04);
+      group.add(vent);
+    }
+
+    const screenMat = new THREE.MeshStandardMaterial({
+      color: 0x0a1117,
+      emissive: COLORS.info,
+      emissiveIntensity: 0.8
+    });
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, 0.2, 0.05), screenMat);
+    screen.position.set(0, h * 0.24, d / 2 + 0.09);
+    group.add(screen);
+
+    const ledMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok,
+      emissive: COLORS.ok,
+      emissiveIntensity: 1.1
+    });
+    [-1, 0, 1].forEach(offset => {
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), ledMat);
+      led.position.set(offset * 0.17, h * 0.4, d / 2 + 0.11);
+      group.add(led);
+    });
+
+    const stripMat = new THREE.MeshStandardMaterial({
+      color: 0x2b3f52,
+      emissive: 0x2b3f52,
+      emissiveIntensity: 0.3
+    });
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, 0.04, 0.3), stripMat);
+    strip.position.set(0, h / 2 + 0.08, 0);
+    group.add(strip);
+
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.08, 0.06, d + 0.08), darkMetal);
+    roof.position.y = h / 2 + 0.02;
+    group.add(roof);
+
+    const footGapX = w / 2 - 0.12;
+    const footGapZ = d / 2 - 0.14;
+    [[-footGapX, -footGapZ], [footGapX, -footGapZ], [-footGapX, footGapZ], [footGapX, footGapZ]].forEach(([fx, fz]) => {
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.16), darkMetal);
+      foot.position.set(fx, -h / 2 - 0.05, fz);
+      group.add(foot);
+    });
+
+    const plateMat = new THREE.MeshStandardMaterial({
+      color: 0x223445,
+      emissive: 0x000000,
+      emissiveIntensity: 0.2
+    });
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(w + 0.26, 0.08, d + 0.3), plateMat);
+    plate.position.set(0, -h / 2 - 0.1, 0);
+    plate.receiveShadow = true;
+    group.add(plate);
+
+    group.position.set(options.x, options.y || h / 2, options.z);
+    if (options.rotY) group.rotation.y = options.rotY;
+
+    const label = makeLabel(options.label || '');
+    label.position.set(0, h / 2 + 0.62, 0);
+    label.userData.cabinet = group;
+    group.add(label);
+
+    group.userData = {
+      routeId: options.routeId || null,
+      kind: options.kind || 'unit',
+      label: options.label || '',
+      bodyMat,
+      ledMat,
+      screenMat,
+      plateMat
+    };
+
+    group.traverse(object => {
+      if (object.isMesh) object.userData.cabinet = group;
+    });
+
+    cabinets.push(group);
+    scene.add(group);
+    return group;
+  }
+
+  function createLoadBlock(options) {
+    const group = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x16222f,
+      metalness: 0.55,
+      roughness: 0.45
+    });
+    const darkMetal = new THREE.MeshStandardMaterial({
+      color: COLORS.steelDark,
+      metalness: 0.62,
+      roughness: 0.5
+    });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.95, 1.25), bodyMat);
+    body.position.y = 0.48;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    const front = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.72, 0.06), darkMetal);
+    front.position.set(0, 0.48, 0.66);
+    group.add(front);
+    const ventMat = new THREE.MeshStandardMaterial({
+      color: 0x0b1118,
+      metalness: 0.3,
+      roughness: 0.85
+    });
+    for (let i = 0; i < 4; i += 1) {
+      const vent = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.05, 0.02), ventMat);
+      vent.position.set(0, 0.28 + i * 0.12, 0.71);
+      group.add(vent);
+    }
+
+    const loadMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok,
+      emissive: COLORS.ok,
+      emissiveIntensity: 0.55
+    });
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.08, 1.0), loadMat);
+    top.position.y = 1.0;
+    group.add(top);
+
+    const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 1.4), darkMetal);
+    base.position.y = 0.04;
+    base.receiveShadow = true;
+    group.add(base);
+
+    const label = makeLabel(options.label || '', 2.0);
+    label.position.set(0, 1.65, 0);
+    label.userData.cabinet = group;
+    group.add(label);
+
+    group.position.set(options.x, 0, options.z);
+    group.userData = {
+      routeId: options.routeId || null,
+      kind: 'load',
+      label: options.label || '',
+      loadMat,
+      ledMat: loadMat,
+      screenMat: null,
+      plateMat: null
+    };
+    group.traverse(object => {
+      if (object.isMesh) object.userData.cabinet = group;
+    });
+
+    cabinets.push(group);
+    scene.add(group);
+    return group;
+  }
+
+  function createPath(points, color, width) {
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geometry = new THREE.TubeGeometry(curve, 80, width || 0.13, 8, false);
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 0.5,
+      transparent: true,
+      opacity: 0.92
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.userData.curve = curve;
+    return { mesh, curve, material };
+  }
+
+  function buildRoutePaths() {
+    ROUTES.forEach((route, index) => {
+      const tx = transformerX(index);
+      const upsX = tx + 0.55;
+      const outX = tx - 0.55;
+      const main = createPath([
+        new THREE.Vector3(tx, 1.25, -4.4),
+        new THREE.Vector3(tx, 1.05, -2.2),
+        new THREE.Vector3(upsX, 1.25, -0.2),
+        new THREE.Vector3(outX, 1.25, 2.0),
+        new THREE.Vector3(tx, 1.1, 4.2)
+      ], COLORS.info, 0.13);
+
+      const battery = createPath([
+        new THREE.Vector3(upsX, 1.05, -0.2),
+        new THREE.Vector3(10.2, 1.05, -0.2),
+        new THREE.Vector3(10.2, 1.2, 1.7)
+      ], COLORS.warn, 0.1);
+
+      const group = new THREE.Group();
+      group.add(main.mesh, battery.mesh);
+      group.visible = false;
+
+      const particles = [];
+      for (let i = 0; i < 9; i += 1) {
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xbfefff,
+          emissive: COLORS.info,
+          emissiveIntensity: 1.5
+        });
+        const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), material);
+        sphere.visible = false;
+        group.add(sphere);
+        particles.push({
+          mesh: sphere,
+          curve: main.curve,
+          offset: i / 9,
+          speed: 0.045 + (i % 3) * 0.008
+        });
+      }
+
+      routePaths.push({
+        id: route.id,
+        group,
+        battery,
+        mainMat: main.material,
+        batteryMat: battery.material,
+        particles
+      });
+      scene.add(group);
+    });
+  }
+
+  function buildBusParticles() {
+    const points = [
+      new THREE.Vector3(-11.4, 1.08, -2.2),
+      new THREE.Vector3(9.8, 1.08, -2.2)
+    ];
+    mainBusCurve = new THREE.CatmullRomCurve3(points);
+    for (let i = 0; i < 12; i += 1) {
+      const material = new THREE.MeshStandardMaterial({
+        color: COLORS.ok,
+        emissive: COLORS.ok,
+        emissiveIntensity: 1.6
+      });
+      const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), material);
+      scene.add(sphere);
+      mainBusParticles.push({
+        mesh: sphere,
+        curve: mainBusCurve,
+        offset: i / 12,
+        speed: 0.04 + (i % 4) * 0.006
+      });
+    }
+  }
+
+  function addCableTray(z, fromX, toX) {
+    const trayMat = new THREE.MeshStandardMaterial({
+      color: 0x1a2632,
+      metalness: 0.65,
+      roughness: 0.4
+    });
+    const length = toX - fromX;
+    const tray = new THREE.Mesh(new THREE.BoxGeometry(length, 0.16, 0.36), trayMat);
+    tray.position.set((fromX + toX) / 2, 4.55, z);
+    tray.castShadow = true;
+    scene.add(tray);
+
+    const postMat = new THREE.MeshStandardMaterial({
+      color: 0x243747,
+      metalness: 0.6,
+      roughness: 0.45
+    });
+    for (let x = fromX + 1.6; x <= toX - 1.2; x += 3) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.65, 0.12), postMat);
+      post.position.set(x, 3.72, z);
+      scene.add(post);
+    }
+  }
+
+  function buildScene() {
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(38, 20),
+      new THREE.MeshStandardMaterial({ color: 0x0a1119, roughness: 0.92, metalness: 0.1 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0.01;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(38, 38, 0x2b3d50, 0x182330);
+    grid.position.y = 0.02;
+    scene.add(grid);
+
+    const platform = new THREE.Mesh(
+      new THREE.BoxGeometry(30, 0.28, 12),
+      new THREE.MeshStandardMaterial({ color: 0x141f2b, roughness: 0.62, metalness: 0.35 })
+    );
+    platform.position.set(0, 0.14, -0.1);
+    platform.receiveShadow = true;
+    scene.add(platform);
+
+    const backdrop = new THREE.Mesh(
+      new THREE.BoxGeometry(36, 7, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0x0c151f, metalness: 0.3, roughness: 0.82 })
+    );
+    backdrop.position.set(0, 3.4, -7.1);
+    backdrop.receiveShadow = true;
+    scene.add(backdrop);
+
+    const wallGlow = new THREE.Mesh(
+      new THREE.BoxGeometry(32, 0.12, 0.1),
+      new THREE.MeshStandardMaterial({
+        color: COLORS.info,
+        emissive: COLORS.info,
+        emissiveIntensity: 0.32
+      })
+    );
+    wallGlow.position.set(0, 5.8, -6.9);
+    scene.add(wallGlow);
+
+    [-4.4, -0.2, 2.0, 4.2].forEach(z => {
+      const glow = new THREE.Mesh(
+        new THREE.PlaneGeometry(21.5, 0.55),
+        new THREE.MeshStandardMaterial({
+          color: 0x0c1a26,
+          emissive: 0x0c1a26,
+          emissiveIntensity: 0.7,
+          transparent: true,
+          opacity: 0.7
+        })
+      );
+      glow.rotation.x = -Math.PI / 2;
+      glow.position.set(-0.2, 0.03, z);
+      scene.add(glow);
+    });
+
+    const pylonMat = new THREE.MeshStandardMaterial({
+      color: 0x1b2c3c,
+      emissive: COLORS.info,
+      emissiveIntensity: 0.28,
+      metalness: 0.6,
+      roughness: 0.4
+    });
+    [-4.2, -3.6].forEach(z => {
+      const pylon = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 4.6, 20), pylonMat);
+      pylon.position.set(-12.2, 2.3, z);
+      pylon.castShadow = true;
+      scene.add(pylon);
+      const ring = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.72, 0.72, 0.16, 24),
+        new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 1.2 })
+      );
+      ring.position.set(-12.2, 3.4, z);
+      scene.add(ring);
+    });
+    const mainsLabel = makeLabel('市电双路', 2.6);
+    mainsLabel.position.set(-12.2, 5.1, -3.9);
+    scene.add(mainsLabel);
+
+    const armMat = new THREE.MeshStandardMaterial({
+      color: 0x26394b,
+      metalness: 0.6,
+      roughness: 0.45
+    });
+    [-4.2, -3.6].forEach(z => {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.12, 0.12), armMat);
+      arm.position.set(-12.2, 3.7, z);
+      scene.add(arm);
+      const insulator = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x8fa2b8, roughness: 0.5 })
+      );
+      insulator.position.set(-12.2, 3.86, z);
+      scene.add(insulator);
+    });
+    const pylonCable = createPath([
+      new THREE.Vector3(-12.2, 3.2, -3.9),
+      new THREE.Vector3(-11.5, 1.7, -2.9),
+      new THREE.Vector3(-11.0, 1.35, -2.2)
+    ], 0x2b3f52, 0.06);
+    scene.add(pylonCable.mesh);
+
+    const busBody = new THREE.Mesh(
+      new THREE.BoxGeometry(21.2, 0.55, 0.8),
+      new THREE.MeshStandardMaterial({ color: 0x223445, metalness: 0.5, roughness: 0.5 })
+    );
+    busBody.position.set(-0.8, 0.95, -2.2);
+    busBody.castShadow = true;
+    busBody.receiveShadow = true;
+    scene.add(busBody);
+
+    mainBusMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok,
+      emissive: COLORS.ok,
+      emissiveIntensity: 0.5,
+      transparent: true,
+      opacity: 0.85
+    });
+    const busGlow = new THREE.Mesh(new THREE.BoxGeometry(20.4, 0.16, 0.42), mainBusMat);
+    busGlow.position.set(-0.8, 1.18, -2.2);
+    scene.add(busGlow);
+
+    const postMat = new THREE.MeshStandardMaterial({
+      color: 0x243747,
+      metalness: 0.6,
+      roughness: 0.45
+    });
+    for (let x = -9.8; x <= 9.2; x += 1.9) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.14), postMat);
+      post.position.set(x, 0.48, -2.2);
+      scene.add(post);
+    }
+
+    const busLabel = makeLabel('ATS 双路切换母线', 3.2);
+    busLabel.position.set(-0.8, 1.9, -2.2);
+    scene.add(busLabel);
+
+    createCabinet({
+      x: -11.4,
+      y: 0.8,
+      z: -2.2,
+      w: 1.8,
+      h: 1.6,
+      d: 1.0,
+      label: '油机 / ATS',
+      kind: 'ats'
+    });
+
+    ROUTES.forEach((route, index) => {
+      const tx = transformerX(index);
+      createCabinet({
+        x: tx,
+        z: -4.4,
+        label: route.code,
+        routeId: route.id,
+        kind: 'transformer'
+      });
+      createCabinet({
+        x: tx + 0.55,
+        z: -0.2,
+        label: `${index + 1}#UPS`,
+        routeId: route.id,
+        kind: 'ups'
+      });
+      createCabinet({
+        x: tx - 0.55,
+        z: 2.0,
+        label: `输出柜 ${index + 1}`,
+        routeId: route.id,
+        kind: 'output'
+      });
+      createLoadBlock({
+        x: tx,
+        z: 4.2,
+        label: `负载 ${index + 1}`,
+        routeId: route.id
+      });
+    });
+
+    [9.7, 11.2, 12.7].forEach((x, index) => {
+      createCabinet({
+        x,
+        z: 2.0,
+        label: `电池组 ${index + 1}`,
+        kind: 'battery'
+      });
+    });
+
+    [-4.4, -0.2, 2.0, 4.2].forEach(z => {
+      addCableTray(z, -10.2, 9.5);
+    });
+
+    const caption = makeLabel('1#-10# 变压器阵列', 3.2);
+    caption.position.set(-10.3, 3.5, -4.4);
+    scene.add(caption);
+    const caption2 = makeLabel('UPS 主机 / 输出柜 / 末端负载', 4.6);
+    caption2.position.set(-2.2, 3.5, 1.6);
+    scene.add(caption2);
+
+    selectionRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.95, 1.18, 48),
+      new THREE.MeshBasicMaterial({
+        color: COLORS.info,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide
+      })
+    );
+    selectionRing.rotation.x = -Math.PI / 2;
+    selectionRing.position.y = 0.12;
+    selectionRing.visible = false;
+    scene.add(selectionRing);
+
+    selectionBeam = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.75, 0.95, 6.4, 24, 1, true),
+      new THREE.MeshBasicMaterial({
+        color: COLORS.info,
+        transparent: true,
+        opacity: 0.12,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    selectionBeam.position.y = 3.2;
+    selectionBeam.visible = false;
+    scene.add(selectionBeam);
+
+    selectionMarker = makeLabel('当前选中', 2.2);
+    selectionMarker.position.y = 2.9;
+    selectionMarker.visible = false;
+    scene.add(selectionMarker);
+
+    buildRoutePaths();
+    buildBusParticles();
+  }
+
+  function resize() {
+    const width = container.clientWidth || 900;
+    const height = container.clientHeight || 560;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  }
+
+  function init() {
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x0a1119, 34, 72);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.domElement.setAttribute('aria-label', '配电架构 3D 模拟实物展示');
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(44, 1, 0.1, 120);
+    camera.position.set(0, 12.5, 21.5);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(-0.5, 2.1, -0.3);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 9;
+    controls.maxDistance = 58;
+    controls.maxPolarAngle = 1.42;
+
+    const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);
+    scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    sun.position.set(9, 17, 11);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 2048;
+    sun.shadow.mapSize.height = 2048;
+    scene.add(sun);
+    const blue = new THREE.PointLight(COLORS.info, 0.65, 34);
+    blue.position.set(-10, 6, -4);
+    scene.add(blue);
+    const green = new THREE.PointLight(COLORS.ok, 0.55, 34);
+    green.position.set(10, 6, 5);
+    scene.add(green);
+    const warm = new THREE.PointLight(COLORS.warn, 0.4, 26);
+    warm.position.set(11, 5, 2);
+    scene.add(warm);
+    const rim = new THREE.PointLight(0x88b7ff, 0.38, 30);
+    rim.position.set(-12, 5, 5);
+    scene.add(rim);
+
+    buildScene();
+
+    raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    let dragStart = null;
+    renderer.domElement.addEventListener('pointerdown', event => {
+      dragStart = [event.clientX, event.clientY];
+    });
+    renderer.domElement.addEventListener('pointerup', event => {
+      if (!dragStart) return;
+      const moved = Math.abs(event.clientX - dragStart[0]) + Math.abs(event.clientY - dragStart[1]) > 6;
+      dragStart = null;
+      if (moved) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(scene.children, true);
+      for (let i = 0; i < hits.length; i += 1) {
+        const routeId = findRouteId(hits[i].object);
+        if (routeId) {
+          selectRouteById(routeId);
+          break;
+        }
+      }
+    });
+    renderer.domElement.addEventListener('pointermove', event => {
+      if (event.pointerType !== 'mouse') return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(scene.children, true);
+      renderer.domElement.style.cursor = hits.some(hit => findRouteId(hit.object)) ? 'pointer' : 'grab';
+    });
+
+    resize();
+    if (window.ResizeObserver) {
+      new ResizeObserver(resize).observe(container);
+    }
+    window.addEventListener('resize', resize);
+  }
+
+  function findRouteId(object) {
+    let node = object;
+    while (node) {
+      if (node.userData && node.userData.routeId) return node.userData.routeId;
+      node = node.parent;
+    }
+    return null;
+  }
+
+  function selectRouteById(id) {
+    const route = ROUTES.find(item => item.id === String(id));
+    if (!route) return;
+    setRoute(route.id);
+    if (typeof window.selectUpsRoute === 'function') window.selectUpsRoute(route);
+  }
+
+  function setRoute(id) {
+    selectedRouteId = String(id);
+    routePaths.forEach(item => {
+      const active = item.id === selectedRouteId;
+      item.group.visible = active;
+      item.particles.forEach(particle => {
+        particle.mesh.visible = active;
+      });
+    });
+    cabinets.forEach(cabinet => {
+      const active = cabinet.userData.routeId === selectedRouteId;
+      if (cabinet.userData.plateMat) {
+        cabinet.userData.plateMat.emissive.setHex(active ? COLORS.info : 0x000000);
+        cabinet.userData.plateMat.emissiveIntensity = active ? 1.0 : 0.18;
+      }
+      if (cabinet.userData.bodyMat && cabinet.userData.kind === 'transformer') {
+        cabinet.userData.bodyMat.emissive.setHex(active ? COLORS.info : 0x000000);
+        cabinet.userData.bodyMat.emissiveIntensity = active ? 0.38 : 0;
+      }
+    });
+    const routeIndex = ROUTES.findIndex(item => item.id === selectedRouteId);
+    if (selectionRing && routeIndex >= 0) {
+      const x = transformerX(routeIndex);
+      selectionRing.position.x = x;
+      selectionRing.position.z = -4.4;
+      selectionRing.visible = true;
+      selectionBeam.position.x = x;
+      selectionBeam.position.z = -4.4;
+      selectionBeam.visible = true;
+      selectionMarker.position.x = x;
+      selectionMarker.position.z = -4.4;
+      selectionMarker.visible = true;
+    }
+    const route = ROUTES.find(item => item.id === selectedRouteId) || ROUTES[0];
+    if (hud.title) hud.title.textContent = route.title;
+    if (hud.meta) hud.meta.textContent = route.path;
+  }
+
+  function update(state) {
+    const flow = state.fault ? 'bad' : state.mainsOn ? 'ok' : 'warn';
+    const color = COLORS[flow];
+
+    if (mainBusMat) {
+      mainBusMat.color.setHex(color);
+      mainBusMat.emissive.setHex(color);
+      mainBusMat.emissiveIntensity = state.fault ? 0.95 : 0.55;
+    }
+    mainBusParticles.forEach(particle => {
+      particle.mesh.material.color.setHex(color);
+      particle.mesh.material.emissive.setHex(color);
+    });
+
+    cabinets.forEach(cabinet => {
+      const kind = cabinet.userData.kind;
+      const ledMat = cabinet.userData.ledMat;
+      const screenMat = cabinet.userData.screenMat;
+      const loadMat = cabinet.userData.loadMat;
+      if (!ledMat) return;
+
+      let statusColor = color;
+      if (kind === 'battery') {
+        statusColor = state.lowBattery || !state.mainsOn ? COLORS.warn : COLORS.ok;
+      }
+      if (kind === 'ups' || kind === 'output' || kind === 'battery' || kind === 'load') {
+        ledMat.color.setHex(statusColor);
+        ledMat.emissive.setHex(statusColor);
+        ledMat.emissiveIntensity = state.fault ? 1.35 : 0.95;
+        if (screenMat) {
+          screenMat.emissive.setHex(statusColor);
+          screenMat.emissiveIntensity = 0.8;
+        }
+      }
+      if (loadMat) {
+        loadMat.color.setHex(statusColor);
+        loadMat.emissive.setHex(statusColor);
+        loadMat.emissiveIntensity = state.fault ? 1.0 : 0.6;
+      }
+    });
+
+    routePaths.forEach(item => {
+      const active = item.id === selectedRouteId;
+      item.mainMat.color.setHex(color);
+      item.mainMat.emissive.setHex(color);
+      item.mainMat.emissiveIntensity = active ? 1.0 : 0.5;
+      const batteryOn = active && (!state.mainsOn || state.fault);
+      item.battery.mesh.visible = batteryOn;
+      if (batteryOn) {
+        const batteryColor = state.fault ? COLORS.bad : COLORS.warn;
+        item.batteryMat.color.setHex(batteryColor);
+        item.batteryMat.emissive.setHex(batteryColor);
+        item.batteryMat.emissiveIntensity = 0.85;
+      }
+      item.particles.forEach(particle => {
+        if (particle.mesh.visible) {
+          particle.mesh.material.color.setHex(color);
+          particle.mesh.material.emissive.setHex(color);
+        }
+      });
+    });
+
+    if (hud.status) {
+      const label = state.fault ? '故障旁路' : state.mainsOn ? '在线供电' : '电池供电';
+      hud.status.textContent = `${label} · 电池 ${Math.round(state.battery)}%`;
+      hud.status.style.borderColor = state.fault
+        ? 'rgba(255, 99, 99, 0.4)'
+        : state.mainsOn
+          ? 'rgba(73, 209, 125, 0.4)'
+          : 'rgba(242, 184, 76, 0.4)';
+      hud.status.style.color = state.fault ? '#fecaca' : state.mainsOn ? '#bbf7d0' : '#fde68a';
+      hud.status.style.background = state.fault
+        ? 'rgba(255, 99, 99, 0.14)'
+        : state.mainsOn
+          ? 'rgba(73, 209, 125, 0.12)'
+          : 'rgba(242, 184, 76, 0.12)';
+    }
+  }
+
+  function screenPoints() {
+    const rect = renderer.domElement.getBoundingClientRect();
+    const points = [];
+    cabinets.forEach(cabinet => {
+      const world = new THREE.Vector3();
+      cabinet.getWorldPosition(world);
+      const ndc = world.clone().project(camera);
+      points.push({
+        label: cabinet.userData.label,
+        routeId: cabinet.userData.routeId,
+        x: (ndc.x * 0.5 + 0.5) * rect.width,
+        y: (-ndc.y * 0.5 + 0.5) * rect.height
+      });
+    });
+    return points;
+  }
+
+  function getSelection() {
+    return {
+      id: selectedRouteId,
+      x: selectionRing ? selectionRing.position.x : null,
+      visible: selectionRing ? selectionRing.visible : false
+    };
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const time = performance.now() * 0.001;
+    controls.update();
+
+    routePaths.forEach(item => {
+      item.particles.forEach(particle => {
+        if (!particle.mesh.visible) return;
+        const progress = (time * particle.speed + particle.offset) % 1;
+        particle.curve.getPointAt(progress, particle.mesh.position);
+      });
+    });
+    mainBusParticles.forEach(particle => {
+      const progress = (time * particle.speed + particle.offset) % 1;
+      particle.curve.getPointAt(progress, particle.mesh.position);
+    });
+    if (selectionRing && selectionRing.visible) {
+      const pulse = 1 + Math.sin(time * 2.4) * 0.07;
+      selectionRing.scale.set(pulse, pulse, 1);
+      selectionRing.material.opacity = 0.7 + Math.sin(time * 2.4) * 0.22;
+      selectionBeam.material.opacity = 0.1 + Math.sin(time * 1.8) * 0.035;
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  init();
+  setRoute('1');
+  update({ mainsOn: true, fault: false, lowBattery: false, battery: 96 });
+  window.UPS3D = { setRoute, update, screenPoints, getSelection };
+  animate();
+})();

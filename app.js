@@ -233,7 +233,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     function unlockSystem(username) {
       document.body.classList.remove('auth-locked');
       setAuthMessage('');
-      pushLog('info', '账号登录', `${username} 已进入华为 UPS 监控管理平台。`);
+      pushLog('info', '账号登录', `${username} 已进入 UPS 监控管理平台。`);
     }
 
     function lockSystem(message = '') {
@@ -451,6 +451,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         ]
       }
     ];
+    window.upsMonitorRoutes = transformerRoutes;
 
     const upsDevices = [
       { id: '1', name: '1#UPS1-4', routeId: '1', transformer: '1#变', input: '1AA5 / 1AA6 / 1AA7', output: '1AU1 - 1AU6', load: '1#UPS集中旁路 / 机房与新风机房' },
@@ -793,14 +794,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
             </div>
             <div class="route-footer"><span>${route.loadTag}</span><span>${route.id === selectedRouteId ? '当前查看' : '点击查看'}</span></div>
           `;
-          card.addEventListener('click', () => {
-            selectedRouteId = route.id;
-            renderTransformerButtons();
-            renderDistributionMap();
-            renderRoutePanel(true);
-            updateTopology();
-            openRouteModal(route);
-          });
+          card.addEventListener('click', () => selectRoute(route));
           row.appendChild(card);
         });
 
@@ -816,14 +810,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         btn.className = `transformer-btn${route.id === selectedRouteId ? ' active' : ''}`;
         btn.type = 'button';
         btn.innerHTML = `<span class="code">${route.code}</span><span class="name">${route.title}</span>`;
-        btn.addEventListener('click', () => {
-          selectedRouteId = route.id;
-          renderTransformerButtons();
-          renderDistributionMap();
-          renderRoutePanel(true);
-          updateTopology();
-          openRouteModal(route);
-        });
+        btn.addEventListener('click', () => selectRoute(route));
         els.transformerButtons.appendChild(btn);
       });
     }
@@ -853,6 +840,17 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       if (els.topologyBadge) {
         els.topologyBadge.textContent = `${route.code} 走向 / ${liveStatus}`;
       }
+      if (window.UPS3D) window.UPS3D.setRoute(route.id);
+    }
+
+    function selectRoute(route) {
+      selectedRouteId = route.id;
+      renderTransformerButtons();
+      renderDistributionMap();
+      renderRoutePanel(true);
+      updateTopology();
+      openRouteModal(route);
+      if (window.UPS3D) window.UPS3D.setRoute(route.id);
     }
 
     function applyRouteFocus() {
@@ -1307,6 +1305,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.alarmSummary.textContent = alarms.length ? '发现 ' + alarms.length + ' 条告警' : '在线监测中';
       syncSidebar();
       updateTopology();
+      if (window.UPS3D) window.UPS3D.update(state);
     }
 
     els.loginTab.addEventListener('click', () => setAuthMode('login'));
@@ -1384,4 +1383,5 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     setInterval(updateClock, 1000);
     setInterval(updateMetrics, 1000);
     aiTimer = state.settings.autoAi ? setInterval(() => runAiInspection(false), Math.max(3, state.settings.aiInterval) * 1000) : null;
-    pushLog('info', '平台启动', '华为 UPS 监控管理平台已上线，开始实时采样。');
+    pushLog('info', '平台启动', 'UPS 监控管理平台已上线，开始实时采样。');
+    window.selectUpsRoute = selectRoute;

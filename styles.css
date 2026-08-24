@@ -369,13 +369,13 @@
     .distribution-board {
       display: grid;
       gap: 14px;
-      padding: 16px;
-      border-radius: 18px;
+      padding: 14px;
+      border-radius: 14px;
       background:
-        radial-gradient(circle at top left, rgba(99,179,255,0.08), transparent 24%),
-        radial-gradient(circle at bottom right, rgba(73,209,125,0.06), transparent 22%),
-        linear-gradient(180deg, rgba(255,255,255,0.75), rgba(232,236,241,0.92));
-      border: 1px solid #cdd6df;
+        radial-gradient(circle at 20% 0%, rgba(99,179,255,0.14), transparent 30%),
+        radial-gradient(circle at 85% 100%, rgba(73,209,125,0.1), transparent 28%),
+        #0a1119;
+      border: 1px solid #223041;
     }
 
     .distribution-head {
@@ -389,12 +389,94 @@
     .distribution-head strong {
       display: block;
       font-size: 15px;
-      color: #16212d;
+      color: var(--text);
     }
 
     .distribution-head span {
-      color: #526273;
+      color: var(--muted);
       font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .power3d-wrap {
+      position: relative;
+      min-height: 560px;
+      border-radius: 12px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(99,179,255,0.12), transparent 34%),
+        linear-gradient(180deg, #0d1722, #080e15);
+      border: 1px solid #26374b;
+      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.5);
+    }
+
+    #power3dContainer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #power3dContainer:active {
+      cursor: grabbing;
+    }
+
+    .power3d-fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .power3d-hud {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      max-width: min(420px, calc(100% - 32px));
+      padding: 12px 14px;
+      border-radius: 10px;
+      pointer-events: none;
+      background: rgba(7, 13, 20, 0.82);
+      border: 1px solid rgba(99, 179, 255, 0.22);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(10px);
+    }
+
+    .power3d-hud-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .power3d-hud-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .power3d-hud-status {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(73, 209, 125, 0.3);
+      color: #bbf7d0;
+      background: rgba(73, 209, 125, 0.1);
+      font-size: 12px;
+    }
+
+    .power3d-hud-hint {
+      margin-top: 8px;
+      color: #71849b;
+      font-size: 11px;
       line-height: 1.45;
     }
 
@@ -2246,6 +2328,16 @@
       .topology-legend { gap: 8px; }
       .route-summary { flex-direction: column; }
       .route-badges { justify-content: flex-start; }
+      .power3d-wrap {
+        min-height: 400px;
+      }
+      .power3d-hud {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        max-width: none;
+        padding: 10px 12px;
+      }
       .power-3d-stage {
         min-height: 1180px;
         perspective: none;

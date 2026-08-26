@@ -35,6 +35,7 @@
   let mainBusMat;
   let mainBusCurve;
   const mainBusParticles = [];
+  const busChevrons = [];
   const cabinets = [];
   const routePaths = [];
   let selectionRing;
@@ -228,6 +229,162 @@
     return group;
   }
 
+  function createTransformer(options) {
+    const group = new THREE.Group();
+    const w = options.w || 1.9;
+    const h = options.h || 2.0;
+    const d = options.d || 1.3;
+    const tankMat = new THREE.MeshStandardMaterial({
+      color: 0x2a3b46,
+      metalness: 0.6,
+      roughness: 0.5
+    });
+    const finMat = new THREE.MeshStandardMaterial({
+      color: 0x22313d,
+      metalness: 0.5,
+      roughness: 0.65
+    });
+    const darkMat = new THREE.MeshStandardMaterial({
+      color: 0x101a24,
+      metalness: 0.6,
+      roughness: 0.55
+    });
+
+    const tank = new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, h * 0.72, d), tankMat);
+    tank.position.y = h * 0.36;
+    tank.castShadow = true;
+    tank.receiveShadow = true;
+    group.add(tank);
+
+    for (let i = 0; i < 7; i += 1) {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(w * 0.05, h * 0.5, d * 0.78), finMat);
+      fin.position.set(-w * 0.43, h * 0.33, -d * 0.28 + i * (d * 0.76 / 6));
+      group.add(fin);
+    }
+
+    const bushingMat = new THREE.MeshStandardMaterial({
+      color: 0x8fa2b8,
+      roughness: 0.4
+    });
+    [-0.18, 0, 0.18].forEach(offset => {
+      const bushing = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.42, 12), bushingMat);
+      bushing.position.set(offset * w * 0.52, h * 0.79, d * 0.18);
+      group.add(bushing);
+    });
+
+    const conservator = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, w * 0.48, 14), finMat);
+    conservator.rotation.z = Math.PI / 2;
+    conservator.position.set(0, h * 0.9, d * 0.14);
+    group.add(conservator);
+
+    const plateMat = new THREE.MeshStandardMaterial({
+      color: 0x223445,
+      emissive: 0x000000,
+      emissiveIntensity: 0.2
+    });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.1, d + 0.34), plateMat);
+    base.position.y = 0.04;
+    base.receiveShadow = true;
+    group.add(base);
+
+    const feetMat = darkMat;
+    [[-w * 0.35, -d * 0.4], [w * 0.35, -d * 0.4], [-w * 0.35, d * 0.4], [w * 0.35, d * 0.4]].forEach(([fx, fz]) => {
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.2), feetMat);
+      foot.position.set(fx, 0.1, fz);
+      group.add(foot);
+    });
+
+    const label = makeLabel(options.label || '');
+    label.position.set(0, h + 0.55, 0);
+    label.visible = false;
+    label.userData.cabinet = group;
+    group.add(label);
+
+    group.position.set(options.x, 0, options.z);
+    group.userData = {
+      routeId: options.routeId || null,
+      kind: 'transformer',
+      label: options.label || '',
+      bodyMat: tankMat,
+      ledMat: null,
+      screenMat: null,
+      plateMat,
+      labelSprite: label
+    };
+    group.traverse(object => {
+      if (object.isMesh) object.userData.cabinet = group;
+    });
+    cabinets.push(group);
+    scene.add(group);
+    return group;
+  }
+
+  function createBatteryBank(options) {
+    const group = new THREE.Group();
+    const packMat = new THREE.MeshStandardMaterial({
+      color: 0x1c2a38,
+      metalness: 0.6,
+      roughness: 0.45
+    });
+    const topMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok,
+      emissive: COLORS.ok,
+      emissiveIntensity: 0.9
+    });
+    for (let row = 0; row < 2; row += 1) {
+      for (let col = 0; col < 3; col += 1) {
+        const pack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.9), packMat);
+        pack.position.set(-0.55 + col * 0.55, 0.42 + row * 0.72, 0);
+        pack.castShadow = true;
+        group.add(pack);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.07, 0.6), topMat);
+        top.position.set(-0.55 + col * 0.55, 0.72 + row * 0.72, 0);
+        group.add(top);
+      }
+    }
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x22313d,
+      metalness: 0.55,
+      roughness: 0.55
+    });
+    [-0.95, 0.95].forEach(zSide => {
+      const side = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.1, 1.45), frameMat);
+      side.position.set(0, 1.05, zSide);
+      side.castShadow = true;
+      group.add(side);
+    });
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.12, 0.14), frameMat);
+    topBar.position.set(0, 2.05, -0.45);
+    group.add(topBar);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.12, 1.6), frameMat);
+    base.position.y = 0.06;
+    base.receiveShadow = true;
+    group.add(base);
+
+    const label = makeLabel(options.label || '');
+    label.position.set(0, 2.65, 0);
+    label.visible = false;
+    label.userData.cabinet = group;
+    group.add(label);
+
+    group.position.set(options.x, 0, options.z);
+    group.userData = {
+      kind: 'battery',
+      label: options.label || '',
+      ledMat: topMat,
+      screenMat: null,
+      plateMat: null,
+      labelSprite: label
+    };
+    group.traverse(object => {
+      if (object.isMesh) object.userData.cabinet = group;
+    });
+    cabinets.push(group);
+    scene.add(group);
+    return group;
+  }
+
   function createLoadBlock(options) {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({
@@ -329,9 +486,9 @@
       ], COLORS.info, 0.13);
 
       const battery = createPath([
-        new THREE.Vector3(upsX, 1.05, -0.2),
+        new THREE.Vector3(10.2, 1.2, 1.7),
         new THREE.Vector3(10.2, 1.05, -0.2),
-        new THREE.Vector3(10.2, 1.2, 1.7)
+        new THREE.Vector3(upsX, 1.05, -0.2)
       ], COLORS.warn, 0.1);
 
       const group = new THREE.Group();
@@ -339,20 +496,38 @@
       group.visible = false;
 
       const particles = [];
-      for (let i = 0; i < 9; i += 1) {
+      for (let i = 0; i < 8; i += 1) {
         const material = new THREE.MeshStandardMaterial({
           color: 0xbfefff,
           emissive: COLORS.info,
+          emissiveIntensity: 1.6
+        });
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 10), material);
+        arrow.visible = false;
+        group.add(arrow);
+        particles.push({
+          mesh: arrow,
+          curve: main.curve,
+          offset: i / 8,
+          speed: 0.05 + (i % 3) * 0.01
+        });
+      }
+
+      const batteryParticles = [];
+      for (let i = 0; i < 4; i += 1) {
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xffe3a3,
+          emissive: COLORS.warn,
           emissiveIntensity: 1.5
         });
-        const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), material);
-        sphere.visible = false;
-        group.add(sphere);
-        particles.push({
-          mesh: sphere,
-          curve: main.curve,
-          offset: i / 9,
-          speed: 0.045 + (i % 3) * 0.008
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.34, 10), material);
+        arrow.visible = false;
+        group.add(arrow);
+        batteryParticles.push({
+          mesh: arrow,
+          curve: battery.curve,
+          offset: i / 4,
+          speed: 0.06 + i * 0.012
         });
       }
 
@@ -362,7 +537,8 @@
         battery,
         mainMat: main.material,
         batteryMat: battery.material,
-        particles
+        particles,
+        batteryParticles
       });
       scene.add(group);
     });
@@ -380,10 +556,10 @@
         emissive: COLORS.ok,
         emissiveIntensity: 1.6
       });
-      const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), material);
-      scene.add(sphere);
+      const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 10), material);
+      scene.add(arrow);
       mainBusParticles.push({
-        mesh: sphere,
+        mesh: arrow,
         curve: mainBusCurve,
         offset: i / 12,
         speed: 0.04 + (i % 4) * 0.006
@@ -549,6 +725,19 @@
       scene.add(post);
     }
 
+    const chevronMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok,
+      emissive: COLORS.ok,
+      emissiveIntensity: 0.7
+    });
+    for (let x = -8.4; x <= 8.4; x += 2.8) {
+      const chevron = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.55, 10), chevronMat);
+      chevron.position.set(x, 1.34, -2.2);
+      chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
+      scene.add(chevron);
+      busChevrons.push(chevron);
+    }
+
     const busLabel = makeLabel('ATS 双路切换母线', 3.2);
     busLabel.position.set(-0.8, 1.9, -2.2);
     scene.add(busLabel);
@@ -566,12 +755,11 @@
 
     ROUTES.forEach((route, index) => {
       const tx = transformerX(index);
-      createCabinet({
+      createTransformer({
         x: tx,
         z: -4.4,
         label: route.code,
-        routeId: route.id,
-        kind: 'transformer'
+        routeId: route.id
       });
       createCabinet({
         x: tx + 0.55,
@@ -596,11 +784,10 @@
     });
 
     [9.7, 11.2, 12.7].forEach((x, index) => {
-      createCabinet({
+      createBatteryBank({
         x,
         z: 2.0,
-        label: `电池组 ${index + 1}`,
-        kind: 'battery'
+        label: `电池组 ${index + 1}`
       });
     });
 
@@ -844,6 +1031,10 @@
       particle.mesh.material.color.setHex(color);
       particle.mesh.material.emissive.setHex(color);
     });
+    busChevrons.forEach(chevron => {
+      chevron.material.color.setHex(color);
+      chevron.material.emissive.setHex(color);
+    });
 
     cabinets.forEach(cabinet => {
       const kind = cabinet.userData.kind;
@@ -885,6 +1076,13 @@
         item.batteryMat.emissive.setHex(batteryColor);
         item.batteryMat.emissiveIntensity = 0.85;
       }
+      item.batteryParticles.forEach(particle => {
+        particle.mesh.visible = batteryOn;
+        if (batteryOn) {
+          particle.mesh.material.color.setHex(state.fault ? COLORS.bad : COLORS.warn);
+          particle.mesh.material.emissive.setHex(state.fault ? COLORS.bad : COLORS.warn);
+        }
+      });
       item.particles.forEach(particle => {
         if (particle.mesh.visible) {
           particle.mesh.material.color.setHex(color);
@@ -943,13 +1141,15 @@
     routePaths.forEach(item => {
       item.particles.forEach(particle => {
         if (!particle.mesh.visible) return;
-        const progress = (time * particle.speed + particle.offset) % 1;
-        particle.curve.getPointAt(progress, particle.mesh.position);
+        moveArrow(particle, time);
+      });
+      item.batteryParticles.forEach(particle => {
+        if (!particle.mesh.visible) return;
+        moveArrow(particle, time);
       });
     });
     mainBusParticles.forEach(particle => {
-      const progress = (time * particle.speed + particle.offset) % 1;
-      particle.curve.getPointAt(progress, particle.mesh.position);
+      moveArrow(particle, time);
     });
     if (selectionRing && selectionRing.visible) {
       const pulse = 1 + Math.sin(time * 2.4) * 0.07;
@@ -959,6 +1159,13 @@
     }
 
     renderer.render(scene, camera);
+  }
+
+  function moveArrow(particle, time) {
+    const progress = (time * particle.speed + particle.offset) % 1;
+    particle.curve.getPointAt(progress, particle.mesh.position);
+    const tangent = particle.curve.getTangentAt(progress);
+    particle.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
   }
 
   init();

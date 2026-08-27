@@ -1219,6 +1219,11 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       return { score, verdict, risk, findings };
     }
 
+    function sync3DScenes() {
+      if (window.UPS3D) window.UPS3D.update(state);
+      if (window.UPSFleet3D) window.UPSFleet3D.update(state);
+    }
+
     function setMains(on) {
       state.mainsOn = on;
       if (on) {
@@ -1235,6 +1240,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         setAlarm('mains', '市电中断', '输入电压为 0V，当前由电池逆变供电。', 'warn');
       }
       updateTopology();
+      sync3DScenes();
     }
 
     function setFault(on) {
@@ -1247,6 +1253,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         clearAlarm('fault');
       }
       updateTopology();
+      sync3DScenes();
     }
 
     function setLowBattery(on) {
@@ -1260,6 +1267,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         clearAlarm('battery');
       }
       updateTopology();
+      sync3DScenes();
     }
 
     function resetAll() {
@@ -1280,6 +1288,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       renderAlarms();
       syncSidebar();
       updateTopology();
+      sync3DScenes();
     }
 
     function rand(min, max) {
@@ -1539,8 +1548,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.alarmSummary.textContent = alarms.length ? '发现 ' + alarms.length + ' 条告警' : '在线监测中';
       syncSidebar();
       updateTopology();
-      if (window.UPS3D) window.UPS3D.update(state);
-      if (window.UPSFleet3D) window.UPSFleet3D.update(state);
+      sync3DScenes();
     }
 
     els.loginTab.addEventListener('click', () => setAuthMode('login'));

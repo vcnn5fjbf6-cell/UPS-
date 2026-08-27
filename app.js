@@ -94,8 +94,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       summaryAlarm: document.getElementById('summaryAlarm'),
       summaryBattery: document.getElementById('summaryBattery'),
       alarmList: document.getElementById('alarmList'),
-      logList: document.getElementById('logList'),
-      eventCount: document.getElementById('eventCount'),
       busValue: document.getElementById('busValue'),
       freqValue: document.getElementById('freqValue'),
       dodValue: document.getElementById('dodValue'),
@@ -553,6 +551,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     }
 
     function renderLogs() {
+      if (!els.logList || !els.eventCount) return;
       els.logList.innerHTML = '';
       logs.forEach(log => {
         const li = document.createElement('li');

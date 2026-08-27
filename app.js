@@ -548,6 +548,36 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       renderLogs();
     }
 
+    let alarmAudioContext = null;
+    function ensureAlarmAudio() {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return null;
+      if (!alarmAudioContext) alarmAudioContext = new AudioCtor();
+      if (alarmAudioContext.state === 'suspended') alarmAudioContext.resume();
+      return alarmAudioContext;
+    }
+
+    function playAlarmSound(level = 'bad') {
+      const ctx = ensureAlarmAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const beeps = level === 'bad' ? 3 : 2;
+      const frequency = level === 'bad' ? 880 : 660;
+      for (let i = 0; i < beeps; i += 1) {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = now + i * 0.28;
+        oscillator.type = 'square';
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.12, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+        oscillator.connect(gain).connect(ctx.destination);
+        oscillator.start(start);
+        oscillator.stop(start + 0.2);
+      }
+    }
+
     function setAlarm(key, title, detail, level) {
       const exists = alarms.findIndex(a => a.key === key);
       const item = { key, title, detail, level };
@@ -555,6 +585,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         alarms[exists] = item;
       } else {
         alarms.unshift(item);
+        if (level === 'bad' || level === 'warn') playAlarmSound(level);
       }
       renderAlarms();
     }

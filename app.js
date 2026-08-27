@@ -16,6 +16,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       bus: 384,
       freq: 50,
       response: 18,
+      dataSource: '智航模拟数据',
       eventId: 0,
       settings: {
         autoAi: true,
@@ -58,6 +59,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       deviceName: document.getElementById('deviceName'),
       deviceState: document.getElementById('deviceState'),
       deviceStdModel: document.getElementById('deviceStdModel'),
+      snapshotLabel: document.getElementById('snapshotLabel'),
       lampRun: document.getElementById('lampRun'),
       lampCharge: document.getElementById('lampCharge'),
       lampFault: document.getElementById('lampFault'),
@@ -489,6 +491,21 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     };
     window.zhihangStdModels = ZHIHANG_MODELS;
 
+    const ZHIHANG_POINTS = {
+      inputV: '1.1.5.2.4.1',
+      outputV: '1.1.5.2.32.1',
+      load: '1.1.5.2.54.1',
+      battery: '1.1.5.2.58.1',
+      temp: '1.1.5.2.59.1',
+      runtime: '1.1.5.2.57.1',
+      current: '1.1.5.2.56.1',
+      freq: '1.1.5.2.38.1',
+      bus: '1.1.5.2.29.1',
+      mains: '1.1.5.2.2.1',
+      fault: '1.1.5.2.9998.1'
+    };
+    window.zhihangPoints = ZHIHANG_POINTS;
+
     const upsDevices = [];
     Object.entries(UPS_COUNTS).forEach(([routeId, count]) => {
       const meta = UPS_ROUTE_META[routeId];
@@ -590,6 +607,70 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
           <small>${item.model.className} / ${item.model.subject}</small>
         </div>
       `).join('');
+    }
+
+    function pointValue(payload, id, fallback) {
+      const entry = payload && payload[id];
+      if (entry && entry.reported_value !== undefined) {
+        const value = Number(entry.reported_value);
+        return Number.isFinite(value) ? value : fallback;
+      }
+      return fallback;
+    }
+
+    function updateDataSourceBadges() {
+      if (els.snapshotLabel) {
+        els.snapshotLabel.textContent = `${state.dataSource} · 1s刷新`;
+      }
+    }
+
+    async function syncZhihangRealtime() {
+      const resultEl = document.getElementById('zhihangSyncResult');
+      const points = Object.values(window.zhihangPoints || {});
+      if (!points.length) {
+        state.dataSource = '智航模拟数据';
+        if (resultEl) resultEl.textContent = '未配置智航测点，当前使用模拟数据';
+        updateDataSourceBadges();
+        return;
+      }
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch('/api/zhihang/realtime', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points }),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        const data = await response.json();
+        if (data.ok && data.data) {
+          const payload = data.data;
+          state.inputV = pointValue(payload, window.zhihangPoints.inputV, state.inputV);
+          state.outputV = pointValue(payload, window.zhihangPoints.outputV, state.outputV);
+          state.load = pointValue(payload, window.zhihangPoints.load, state.load);
+          state.battery = pointValue(payload, window.zhihangPoints.battery, state.battery);
+          state.temp = pointValue(payload, window.zhihangPoints.temp, state.temp);
+          state.runtime = pointValue(payload, window.zhihangPoints.runtime, state.runtime);
+          state.current = pointValue(payload, window.zhihangPoints.current, state.current);
+          state.freq = pointValue(payload, window.zhihangPoints.freq, state.freq);
+          state.bus = pointValue(payload, window.zhihangPoints.bus, state.bus);
+          state.mainsOn = pointValue(payload, window.zhihangPoints.mains, state.mainsOn ? 1 : 0) !== 0;
+          state.fault = pointValue(payload, window.zhihangPoints.fault, state.fault ? 1 : 0) !== 0;
+          state.dataSource = '智航实时数据';
+          if (resultEl) resultEl.textContent = '同步成功：当前运行数据来自智航 CMDB';
+        } else {
+          state.dataSource = '智航模拟数据';
+          if (resultEl) resultEl.textContent = `同步失败：${data.error || '无数据'}，当前使用模拟数据`;
+        }
+      } catch (error) {
+        state.dataSource = '智航模拟数据';
+        if (resultEl) resultEl.textContent = '智航接口不可达，当前使用模拟数据';
+      }
+      updateDataSourceBadges();
+      updateMetrics(true);
+      updateTopology();
+      runAiInspection(false);
     }
 
     function syncSidebar() {
@@ -759,7 +840,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       if (window.UPSFleet3D) window.UPSFleet3D.setDevice(device.id);
 
       if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
-      if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health}`;
+      if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health} / ${state.dataSource}`;
       if (els.deviceStdModel && device.stdModel) {
         els.deviceStdModel.textContent = `智航模型：${device.stdModel.name} · ${device.stdModel.refId} · ${device.stdModel.objId}`;
       }
@@ -775,7 +856,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       const batteryStatus = state.lowBattery ? '低压预警' : state.mainsOn ? '浮充待机' : '放电供电';
       const health = state.fault ? '逆变异常' : state.lowBattery ? '需关注' : '运行正常';
       if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
-      if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health}`;
+      if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health} / ${state.dataSource}`;
       if (els.deviceStdModel && device.stdModel) {
         els.deviceStdModel.textContent = `智航模型：${device.stdModel.name} · ${device.stdModel.refId} · ${device.stdModel.objId}`;
       }
@@ -910,7 +991,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         });
       }
       if (els.topologyBadge) {
-        els.topologyBadge.textContent = `${route.code} 走向 / ${liveStatus}`;
+        els.topologyBadge.textContent = `${route.code} 走向 / ${liveStatus} / ${state.dataSource}`;
       }
       if (window.UPS3D) window.UPS3D.setRoute(route.id);
     }
@@ -990,7 +1071,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.aiCoverage.textContent = state.fault ? '电源 / 电池 / 逆变' : state.mainsOn ? '电源 / 电池 / 温度' : '电池 / 负载 / 温度';
       els.aiTime.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
       els.aiRing.style.setProperty('--score-angle', angle + 'deg');
-      els.aiStatus.textContent = manual ? '已巡检' : '自动巡检';
+      els.aiStatus.textContent = `${manual ? '已巡检' : '自动巡检'} · ${state.dataSource}`;
       els.aiInputText.textContent = state.mainsOn ? '市电波动在容差内' : '已切换为电池供电';
       els.aiBatteryText.textContent = state.battery < state.settings.batteryWarn ? '电池容量偏低，需关注续航' : '电池容量稳定，充放电曲线平滑';
       els.aiFaultText.textContent = state.fault ? '已识别逆变器异常特征' : '未检测到逆变器或旁路异常';
@@ -1112,13 +1193,13 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
 
       if (els.topologyBadge) {
         if (faultPath) {
-          els.topologyBadge.textContent = '故障旁路路径';
+          els.topologyBadge.textContent = `故障旁路路径 / ${state.dataSource}`;
         } else if (onBattery) {
-          els.topologyBadge.textContent = '电池供电路径';
+          els.topologyBadge.textContent = `电池供电路径 / ${state.dataSource}`;
         } else if (state.lowBattery) {
-          els.topologyBadge.textContent = '电池预警运行';
+          els.topologyBadge.textContent = `电池预警运行 / ${state.dataSource}`;
         } else {
-          els.topologyBadge.textContent = '在线供电路径';
+          els.topologyBadge.textContent = `在线供电路径 / ${state.dataSource}`;
         }
       }
       applyRouteFocus();
@@ -1188,7 +1269,11 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       ctx.fillRect(246, 11, 12, 12);
     }
 
-    function updateMetrics() {
+    function updateMetrics(skipSimulation = false) {
+      if (els.snapshotLabel) {
+        els.snapshotLabel.textContent = `${state.dataSource} · 1s刷新`;
+      }
+      if (!skipSimulation && state.dataSource !== '智航实时数据') {
       const loadDelta = state.mainsOn ? rand(-2, 2) : rand(-1, 2);
       state.load = Math.max(18, Math.min(88, state.load + loadDelta * 0.15));
       state.temp = Math.max(30, Math.min(58, state.temp + (state.fault ? 0.12 : 0.03) + (state.mainsOn ? 0.01 : 0.04)));
@@ -1211,6 +1296,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         state.bus = 372 + rand(-4, 4);
         state.freq = 49.3 + rand(-0.12, 0.12);
         state.response = 44 + rand(-5, 8);
+      }
       }
 
       if (!state.mainsOn && state.battery <= state.settings.batteryBad && !alarms.some(a => a.key === 'batteryCritical')) {
@@ -1237,7 +1323,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.batteryDot.className = `dot ${batteryClass}`;
       els.batteryText.textContent = state.lowBattery ? '低压预警' : state.mainsOn ? '待机充电' : '放电中';
 
-      els.deviceHealth.textContent = state.fault ? '设备告警中' : state.mainsOn ? '设备自检通过' : '电池切换运行';
+      els.deviceHealth.textContent = `${state.fault ? '设备告警中' : state.mainsOn ? '设备自检通过' : '电池切换运行'} / ${state.dataSource}`;
       els.deviceState.textContent = state.fault
         ? '逆变器异常，输出波动，需要维护处理'
         : state.mainsOn
@@ -1382,6 +1468,14 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         }
       });
     }
+    const zhihangSyncBtn = document.getElementById('zhihangSyncBtn');
+    if (zhihangSyncBtn) {
+      zhihangSyncBtn.addEventListener('click', async () => {
+        const resultEl = document.getElementById('zhihangSyncResult');
+        if (resultEl) resultEl.textContent = '正在同步智航实时数据...';
+        await syncZhihangRealtime();
+      });
+    }
     document.getElementById('saveSettingsBtn').addEventListener('click', applySettings);
     if (els.routeModalClose) {
       els.routeModalClose.addEventListener('click', closeRouteModal);
@@ -1419,6 +1513,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     renderAlarms();
     renderLogs();
     renderStdModels();
+    syncZhihangRealtime();
     drawTrend();
     updateTopology();
     runAiInspection(false);

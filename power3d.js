@@ -1304,7 +1304,7 @@
 
     if (hud.status) {
       const label = state.fault ? '故障旁路' : state.mainsOn ? '在线供电' : '电池供电';
-      hud.status.textContent = `${label} · 电池 ${Math.round(state.battery)}%`;
+      hud.status.textContent = `${label} · 电池 ${Math.round(state.battery)}%${state.dataSource ? ' · ' + state.dataSource : ''}`;
       hud.status.style.borderColor = state.fault
         ? 'rgba(255, 99, 99, 0.4)'
         : state.mainsOn

@@ -1,0 +1,702 @@
+[
+  {
+    "id": 1,
+    "name": "高压配电柜",
+    "ref_id": "1.1.1.1",
+    "class_name": "高压配电",
+    "subject_name": "电气"
+  },
+  {
+    "id": 2,
+    "name": "中压备自投PLC",
+    "ref_id": "1.1.1.2",
+    "class_name": "高压配电",
+    "subject_name": "电气"
+  },
+  {
+    "id": 92,
+    "name": "高压柴油发电机组",
+    "ref_id": "3.1.1.3",
+    "class_name": "高压配电",
+    "subject_name": "电气"
+  },
+  {
+    "id": 3,
+    "name": "变压器",
+    "ref_id": "1.1.2.1",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 4,
+    "name": "低压配电柜",
+    "ref_id": "1.1.3.1",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 5,
+    "name": "ATMT",
+    "ref_id": "1.1.3.2",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 6,
+    "name": "三相ATS/STS",
+    "ref_id": "1.1.3.3",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 7,
+    "name": "单相ATS/STS",
+    "ref_id": "1.1.3.4",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 8,
+    "name": "变频器",
+    "ref_id": "1.1.3.5",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 9,
+    "name": "开关模块",
+    "ref_id": "1.1.3.6",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 10,
+    "name": "电流模块",
+    "ref_id": "1.1.3.7",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 11,
+    "name": "低压备自投PLC",
+    "ref_id": "1.1.3.8",
+    "class_name": "变压器",
+    "subject_name": "电气"
+  },
+  {
+    "id": 12,
+    "name": "低压柴油发电机",
+    "ref_id": "1.1.4.1",
+    "class_name": "发电机组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 13,
+    "name": "高压柴油发电机",
+    "ref_id": "1.1.4.2",
+    "class_name": "发电机组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 14,
+    "name": "供油控制柜",
+    "ref_id": "1.1.4.3",
+    "class_name": "发电机组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 15,
+    "name": "柴发并机控制柜",
+    "ref_id": "1.1.4.6",
+    "class_name": "发电机组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 16,
+    "name": "单相UPS",
+    "ref_id": "1.1.5.1",
+    "class_name": "不间断电源",
+    "subject_name": "电气"
+  },
+  {
+    "id": 17,
+    "name": "三相UPS",
+    "ref_id": "1.1.5.2",
+    "class_name": "不间断电源",
+    "subject_name": "电气"
+  },
+  {
+    "id": 18,
+    "name": "HVDC",
+    "ref_id": "1.1.5.3",
+    "class_name": "不间断电源",
+    "subject_name": "电气"
+  },
+  {
+    "id": 19,
+    "name": "EPS",
+    "ref_id": "1.1.5.4",
+    "class_name": "不间断电源",
+    "subject_name": "电气"
+  },
+  {
+    "id": 20,
+    "name": "直流屏",
+    "ref_id": "1.1.5.5",
+    "class_name": "不间断电源",
+    "subject_name": "电气"
+  },
+  {
+    "id": 21,
+    "name": "巴拿马电源",
+    "ref_id": "1.1.5.6",
+    "class_name": "不间断电源",
+    "subject_name": "电气"
+  },
+  {
+    "id": 22,
+    "name": "铅酸阀控蓄电池组",
+    "ref_id": "1.1.6.1",
+    "class_name": "电池",
+    "subject_name": "电气"
+  },
+  {
+    "id": 23,
+    "name": "锂电池组",
+    "ref_id": "1.1.6.2",
+    "class_name": "电池",
+    "subject_name": "电气"
+  },
+  {
+    "id": 24,
+    "name": "交流列头柜",
+    "ref_id": "1.1.7.1",
+    "class_name": "列头柜",
+    "subject_name": "电气"
+  },
+  {
+    "id": 25,
+    "name": "直流列头柜",
+    "ref_id": "1.1.7.2",
+    "class_name": "列头柜",
+    "subject_name": "电气"
+  },
+  {
+    "id": 26,
+    "name": "始端箱",
+    "ref_id": "1.1.7.3",
+    "class_name": "列头柜",
+    "subject_name": "电气"
+  },
+  {
+    "id": 27,
+    "name": "交流PDU",
+    "ref_id": "1.1.8.1",
+    "class_name": "PDU",
+    "subject_name": "电气"
+  },
+  {
+    "id": 28,
+    "name": "直流PDU",
+    "ref_id": "1.1.8.2",
+    "class_name": "PDU",
+    "subject_name": "电气"
+  },
+  {
+    "id": 82,
+    "name": "区域",
+    "ref_id": "2.1.1.1",
+    "class_name": "区域",
+    "subject_name": "电气"
+  },
+  {
+    "id": 93,
+    "name": "变压器组",
+    "ref_id": "3.1.2.1",
+    "class_name": "变压器组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 94,
+    "name": "低压进线组",
+    "ref_id": "3.1.3.1",
+    "class_name": "低压组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 95,
+    "name": "低压柴油发电机组",
+    "ref_id": "3.1.3.2",
+    "class_name": "低压组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 96,
+    "name": "UPS组",
+    "ref_id": "3.1.3.3",
+    "class_name": "低压组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 97,
+    "name": "UPS输出配电组",
+    "ref_id": "3.1.3.4",
+    "class_name": "低压组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 98,
+    "name": "PDU组",
+    "ref_id": "3.1.3.5",
+    "class_name": "低压组",
+    "subject_name": "电气"
+  },
+  {
+    "id": 29,
+    "name": "水冷精密空调",
+    "ref_id": "1.2.1.1",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 30,
+    "name": "风冷精密空调",
+    "ref_id": "1.2.1.2",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 31,
+    "name": "水冷型AHU",
+    "ref_id": "1.2.1.3",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 32,
+    "name": "风冷型AHU",
+    "ref_id": "1.2.1.4",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 33,
+    "name": "新风机",
+    "ref_id": "1.2.1.5",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 34,
+    "name": "除湿机",
+    "ref_id": "1.2.1.6",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 35,
+    "name": "湿膜加湿器",
+    "ref_id": "1.2.1.7",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 36,
+    "name": "恒湿机",
+    "ref_id": "1.2.1.8",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 37,
+    "name": "送风地板",
+    "ref_id": "1.2.1.9",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 38,
+    "name": "风冷氟泵空调",
+    "ref_id": "1.2.1.10",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 39,
+    "name": "水冷氟泵相变多联内机",
+    "ref_id": "1.2.1.11",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 40,
+    "name": "热回收机组",
+    "ref_id": "1.2.1.12",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 99,
+    "name": "无EC风机空调组",
+    "ref_id": "3.2.1.3",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 100,
+    "name": "列间空调组",
+    "ref_id": "3.2.1.4",
+    "class_name": "空调末端",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 41,
+    "name": "水冷冷水机组",
+    "ref_id": "1.2.2.1",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 42,
+    "name": "风冷冷水机组",
+    "ref_id": "1.2.2.2",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 43,
+    "name": "开式冷却塔",
+    "ref_id": "1.2.2.3",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 44,
+    "name": "闭式冷却塔",
+    "ref_id": "1.2.2.4",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 45,
+    "name": "电加热",
+    "ref_id": "1.2.2.5",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 46,
+    "name": "开式蓄冷罐",
+    "ref_id": "1.2.2.6",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 47,
+    "name": "闭式蓄冷罐",
+    "ref_id": "1.2.2.7",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 48,
+    "name": "加药装置",
+    "ref_id": "1.2.2.8",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 49,
+    "name": "定压装置",
+    "ref_id": "1.2.2.9",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 50,
+    "name": "水池（箱）",
+    "ref_id": "1.2.2.10",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 51,
+    "name": "板式换热器",
+    "ref_id": "1.2.2.11",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 52,
+    "name": "补水系统",
+    "ref_id": "1.2.2.12",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 53,
+    "name": "冷冻泵",
+    "ref_id": "1.2.2.13",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 54,
+    "name": "冷却泵",
+    "ref_id": "1.2.2.14",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 55,
+    "name": "其他水泵",
+    "ref_id": "1.2.2.15",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 56,
+    "name": "CDU",
+    "ref_id": "1.2.2.17",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 57,
+    "name": "远传水表",
+    "ref_id": "1.2.2.18",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 58,
+    "name": "氟泵外机",
+    "ref_id": "1.2.2.19",
+    "class_name": "冷源",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 59,
+    "name": "开关阀门",
+    "ref_id": "1.2.3.1",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 60,
+    "name": "调节阀门",
+    "ref_id": "1.2.3.2",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 61,
+    "name": "冷冻总管",
+    "ref_id": "1.2.3.3",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 62,
+    "name": "冷却总管",
+    "ref_id": "1.2.3.4",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 63,
+    "name": "电伴热",
+    "ref_id": "1.2.3.5",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 64,
+    "name": "机组支管",
+    "ref_id": "1.2.3.6",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 65,
+    "name": "末端管路及室外设备",
+    "ref_id": "1.2.3.7",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 66,
+    "name": "分水器",
+    "ref_id": "1.2.3.8",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 67,
+    "name": "集水器",
+    "ref_id": "1.2.3.9",
+    "class_name": "管道＆阀门",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 83,
+    "name": "数据中心",
+    "ref_id": "2.2.1.1",
+    "class_name": "数据中心",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 101,
+    "name": "制冷单元组",
+    "ref_id": "3.2.2.1",
+    "class_name": "制冷组",
+    "subject_name": "暖通"
+  },
+  {
+    "id": 84,
+    "name": "楼栋",
+    "ref_id": "2.3.1.1",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 68,
+    "name": "温度传感器",
+    "ref_id": "1.3.1.2",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 69,
+    "name": "定位漏液检测器",
+    "ref_id": "1.3.1.3",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 70,
+    "name": "区域漏液检测器",
+    "ref_id": "1.3.1.4",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 71,
+    "name": "气体浓度检测器",
+    "ref_id": "1.3.1.5",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 72,
+    "name": "压力传感器",
+    "ref_id": "1.3.1.6",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 73,
+    "name": "流量传感器",
+    "ref_id": "1.3.1.7",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 74,
+    "name": "液位传感器",
+    "ref_id": "1.3.1.8",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 103,
+    "name": "温湿度传感器",
+    "ref_id": "1.3.1.1",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 104,
+    "name": "动环监控系统",
+    "ref_id": "1.3.3.1",
+    "class_name": "传感器",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 75,
+    "name": "服务器",
+    "ref_id": "1.3.2.1",
+    "class_name": "服务设备",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 76,
+    "name": "交换机",
+    "ref_id": "1.3.2.2",
+    "class_name": "服务设备",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 77,
+    "name": "采集器",
+    "ref_id": "1.3.2.3",
+    "class_name": "服务设备",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 78,
+    "name": "DDC/PLC",
+    "ref_id": "1.3.2.4",
+    "class_name": "服务设备",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 79,
+    "name": "串口服务器",
+    "ref_id": "1.3.2.5",
+    "class_name": "服务设备",
+    "subject_name": "弱电"
+  },
+  {
+    "id": 80,
+    "name": "消防设备",
+    "ref_id": "1.4.1.9",
+    "class_name": "消防模块",
+    "subject_name": "消防"
+  },
+  {
+    "id": 85,
+    "name": "楼层",
+    "ref_id": "2.4.1.1",
+    "class_name": "消防模块",
+    "subject_name": "消防"
+  },
+  {
+    "id": 81,
+    "name": "空气采样",
+    "ref_id": "1.4.1.10",
+    "class_name": "消防模块",
+    "subject_name": "消防"
+  },
+  {
+    "id": 86,
+    "name": "设施房间",
+    "ref_id": "2.5.1.1",
+    "class_name": "设施房间",
+    "subject_name": "通用"
+  },
+  {
+    "id": 87,
+    "name": "IT房间",
+    "ref_id": "2.5.1.2",
+    "class_name": "设施房间",
+    "subject_name": "通用"
+  },
+  {
+    "id": 102,
+    "name": "通用设备",
+    "ref_id": "1.10.1.1",
+    "class_name": "通用设备",
+    "subject_name": "通用"
+  }
+]

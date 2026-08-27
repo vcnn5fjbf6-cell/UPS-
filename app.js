@@ -454,16 +454,16 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     window.upsMonitorRoutes = transformerRoutes;
 
     const upsDevices = [
-      { id: '1', name: '1#UPS1-4', routeId: '1', transformer: '1#变', input: '1AA5 / 1AA6 / 1AA7', output: '1AU1 - 1AU6', load: '1#UPS集中旁路 / 机房与新风机房' },
-      { id: '2', name: '2#UPS1-4', routeId: '2', transformer: '2#变', input: '2AA4 / 2AA6', output: '2#UPS输出柜', load: '2#UPS集中旁路 / 冷源备用' },
-      { id: '3', name: '3#UPS', routeId: '3', transformer: '3#变', input: '3AA5 / 3AA6', output: '3UPS / 11UPS / 12UPS', load: '网络设备 / 维修旁路' },
-      { id: '4', name: '4#UPS', routeId: '4', transformer: '4#变', input: '4AA5 / 4AA6', output: '4UPS / 13UPS', load: '楼控与监控链路' },
-      { id: '5', name: '5#UPS1-3', routeId: '5', transformer: '5#变', input: '5AA5 / 5AA6', output: '5UPS输出', load: '4#冷机 / 5#冷源系统备用' },
-      { id: '6', name: '6#UPS1-3', routeId: '6', transformer: '6#变', input: '6AA5 / 6AA6', output: '6UPS输出', load: '3#冷冻 / 冷却泵 / 冷塔风机' },
-      { id: '7', name: '7#UPS', routeId: '7', transformer: '7#变', input: '7AA8', output: '7AA9 / 7AU5', load: '机房6-10奇数空调' },
-      { id: '8', name: '8#UPS1-4', routeId: '8', transformer: '8#变', input: '8AA7', output: '8AA5 / 8AA6', load: '机房偶数空调 / 插座' },
-      { id: '9', name: '9#UPS1-3', routeId: '9', transformer: '9#变', input: '9AA6 / 9AA7', output: '9UPS输出', load: 'CH3 / 5#冷机备用' },
-      { id: '10', name: '10#UPS', routeId: '10', transformer: '10#变', input: '10AA7', output: '10AA8', load: '楼控DDC / 大屏 / 环控' }
+      { id: '1', name: '1#UPS1-4', model: 'UPS5000E', routeId: '1', transformer: '1#变', input: '1AA5 / 1AA6 / 1AA7', output: '1AU1 - 1AU6', load: '1#UPS集中旁路 / 机房与新风机房' },
+      { id: '2', name: '2#UPS1-4', model: 'UPS5000E', routeId: '2', transformer: '2#变', input: '2AA4 / 2AA6', output: '2#UPS输出柜', load: '2#UPS集中旁路 / 冷源备用' },
+      { id: '3', name: '3#UPS', model: 'UPS5000E', routeId: '3', transformer: '3#变', input: '3AA5 / 3AA6', output: '3UPS / 11UPS / 12UPS', load: '网络设备 / 维修旁路' },
+      { id: '4', name: '4#UPS', model: 'UPS5000E', routeId: '4', transformer: '4#变', input: '4AA5 / 4AA6', output: '4UPS / 13UPS', load: '楼控与监控链路' },
+      { id: '5', name: '5#UPS1-3', model: 'UPS5000E', routeId: '5', transformer: '5#变', input: '5AA5 / 5AA6', output: '5UPS输出', load: '4#冷机 / 5#冷源系统备用' },
+      { id: '6', name: '6#UPS1-3', model: 'UPS5000H', routeId: '6', transformer: '6#变', input: '6AA5 / 6AA6', output: '6UPS输出', load: '3#冷冻 / 冷却泵 / 冷塔风机' },
+      { id: '7', name: '7#UPS', model: 'UPS5000H', routeId: '7', transformer: '7#变', input: '7AA8', output: '7AA9 / 7AU5', load: '机房6-10奇数空调' },
+      { id: '8', name: '8#UPS1-4', model: 'UPS5000H', routeId: '8', transformer: '8#变', input: '8AA7', output: '8AA5 / 8AA6', load: '机房偶数空调 / 插座' },
+      { id: '9', name: '9#UPS1-3', model: 'UPS5000H', routeId: '9', transformer: '9#变', input: '9AA6 / 9AA7', output: '9UPS输出', load: 'CH3 / 5#冷机备用' },
+      { id: '10', name: '10#UPS', model: 'UPS5000H', routeId: '10', transformer: '10#变', input: '10AA7', output: '10AA8', load: '楼控DDC / 大屏 / 环控' }
     ];
     window.upsMonitorDevices = upsDevices;
 
@@ -558,7 +558,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
 
     function exportInspectionData() {
       const payload = {
-        device: '华为 FusionPower 智能 UPS - A01',
+        device: '华为 UPS5000E / UPS5000H',
         exportedAt: new Date().toISOString(),
         selectedRoute: currentRoute(),
         settings: state.settings,
@@ -694,7 +694,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       selectedUpsDevice = device;
       if (window.UPSFleet3D) window.UPSFleet3D.setDevice(device.id);
 
-      if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}`;
+      if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
       if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health}`;
       if (els.deviceState) {
         els.deviceState.textContent = `${liveStatus}，${batteryStatus}，输入 ${device.input}，输出 ${device.output}，负载：${device.load}`;
@@ -707,7 +707,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       const liveStatus = routeLiveStatus();
       const batteryStatus = state.lowBattery ? '低压预警' : state.mainsOn ? '浮充待机' : '放电供电';
       const health = state.fault ? '逆变异常' : state.lowBattery ? '需关注' : '运行正常';
-      if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}`;
+      if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
       if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health}`;
       if (els.deviceState) {
         els.deviceState.textContent = `${liveStatus}，${batteryStatus}，输入 ${device.input}，输出 ${device.output}，负载：${device.load}`;
@@ -1309,7 +1309,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       updateTopology();
       if (window.UPS3D) window.UPS3D.update(state);
       if (window.UPSFleet3D) window.UPSFleet3D.update(state);
-      if (window.UPSArch3D) window.UPSArch3D.update(state);
     }
 
     els.loginTab.addEventListener('click', () => setAuthMode('login'));

@@ -37,12 +37,48 @@
   let hoveredDeviceId = null;
   let lastState = { mainsOn: true, fault: false, lowBattery: false, battery: 96 };
   const cabinets = [];
+  const flowMats = [];
+  const chevrons = [];
+  const flowParticles = [];
 
   function devicePosition(index) {
     return {
       x: -8.1 + index * 1.8,
       z: index % 2 === 0 ? -0.35 : 0.35
     };
+  }
+
+  function createPath(points, width, color) {
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geometry = new THREE.TubeGeometry(curve, 48, width || 0.1, 8, false);
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 0.55,
+      transparent: true,
+      opacity: 0.9
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    flowMats.push(material);
+    return { mesh, curve, material };
+  }
+
+  function addFlowArrows(curve, count, color) {
+    for (let i = 0; i < count; i += 1) {
+      const material = new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 1.5
+      });
+      const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.34, 10), material);
+      scene.add(arrow);
+      flowParticles.push({
+        mesh: arrow,
+        curve,
+        offset: i / count,
+        speed: 0.055 + (i % 3) * 0.01
+      });
+    }
   }
 
   function makeLabel(text, scale) {
@@ -198,6 +234,32 @@
     plate.receiveShadow = true;
     group.add(plate);
 
+    if (options.kind === 'ups') {
+      const terminalMat = new THREE.MeshStandardMaterial({
+        color: 0x8fa2b8,
+        metalness: 0.7,
+        roughness: 0.35
+      });
+      const inTerm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.3), terminalMat);
+      inTerm.position.set(-w / 2 - 0.05, 0.1, 0);
+      group.add(inTerm);
+      const inTip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 0.1, 0.16),
+        new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 0.9 })
+      );
+      inTip.position.set(-w / 2 - 0.11, 0.1, 0);
+      group.add(inTip);
+      const outTerm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.3), terminalMat);
+      outTerm.position.set(w / 2 + 0.05, 0.1, 0);
+      group.add(outTerm);
+      const outTip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 0.1, 0.16),
+        new THREE.MeshStandardMaterial({ color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.9 })
+      );
+      outTip.position.set(w / 2 + 0.11, 0.1, 0);
+      group.add(outTip);
+    }
+
     group.position.set(options.x, h / 2, options.z);
     const label = makeLabel(options.label || '');
     label.position.set(0, h / 2 + 0.62, 0);
@@ -265,10 +327,69 @@
       createCabinet({
         x: pos.x,
         z: pos.z,
-        label: device.name,
-        deviceId: device.id
+        label: `${device.name} · ${device.model || 'UPS5000E'}`,
+        deviceId: device.id,
+        kind: 'ups'
       });
     });
+
+    const busY = 0.9;
+    const inputBus = createPath([
+      new THREE.Vector3(-8.4, busY, -1.6),
+      new THREE.Vector3(8.4, busY, -1.6)
+    ], 0.16, COLORS.info);
+    scene.add(inputBus.mesh);
+    const outputBus = createPath([
+      new THREE.Vector3(-8.4, busY, 1.6),
+      new THREE.Vector3(8.4, busY, 1.6)
+    ], 0.16, COLORS.ok);
+    scene.add(outputBus.mesh);
+
+    [-6.3, -3.15, 0, 3.15, 6.3].forEach(x => {
+      const chevron = new THREE.Mesh(
+        new THREE.ConeGeometry(0.16, 0.42, 10),
+        new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 0.7 })
+      );
+      chevron.position.set(x, busY + 0.18, -1.6);
+      chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
+      scene.add(chevron);
+      chevrons.push(chevron);
+      const chevronOut = new THREE.Mesh(
+        new THREE.ConeGeometry(0.16, 0.42, 10),
+        new THREE.MeshStandardMaterial({ color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.7 })
+      );
+      chevronOut.position.set(x, busY + 0.18, 1.6);
+      chevronOut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
+      scene.add(chevronOut);
+      chevrons.push(chevronOut);
+    });
+
+    addFlowArrows(inputBus.curve, 10, COLORS.info);
+    addFlowArrows(outputBus.curve, 10, COLORS.ok);
+
+    DEVICES.forEach((device, index) => {
+      const pos = devicePosition(index);
+      const inputFeeder = createPath([
+        new THREE.Vector3(pos.x, busY, -1.6),
+        new THREE.Vector3(pos.x, 1.05, -0.35)
+      ], 0.09, COLORS.info);
+      scene.add(inputFeeder.mesh);
+      addFlowArrows(inputFeeder.curve, 2, COLORS.info);
+
+      const outputFeeder = createPath([
+        new THREE.Vector3(pos.x, 1.05, 0.35),
+        new THREE.Vector3(pos.x, busY, 1.6)
+      ], 0.09, COLORS.ok);
+      scene.add(outputFeeder.mesh);
+      addFlowArrows(outputFeeder.curve, 2, COLORS.ok);
+    });
+
+    const inLabel = makeLabel('进电输入', 2.2);
+    inLabel.position.set(-10.4, 1.6, -1.6);
+    scene.add(inLabel);
+    const outLabel = makeLabel('输出负载', 2.2);
+    outLabel.position.set(-10.4, 1.6, 1.6);
+    scene.add(outLabel);
 
     const caption = makeLabel('UPS 实物阵列 1# - 10#', 4.2);
     caption.position.set(0, 3.6, 0);
@@ -374,8 +495,8 @@
 
     const device = DEVICES[index];
     if (device) {
-      hud.title.textContent = device.name;
-      hud.meta.textContent = `${device.transformer} / 输入 ${device.input} / 输出 ${device.output}`;
+      hud.title.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
+      hud.meta.textContent = `${device.transformer} / ${device.model || 'UPS5000E'} / 输入 ${device.input} / 输出 ${device.output}`;
       updateStatusText(lastState);
     }
   }
@@ -412,6 +533,19 @@
         screenMat.emissive.setHex(color);
         screenMat.emissiveIntensity = 0.8;
       }
+    });
+    flowMats.forEach(mat => {
+      mat.color.setHex(color);
+      mat.emissive.setHex(color);
+      mat.emissiveIntensity = state.fault ? 0.9 : 0.5;
+    });
+    chevrons.forEach(chevron => {
+      chevron.material.color.setHex(color);
+      chevron.material.emissive.setHex(color);
+    });
+    flowParticles.forEach(particle => {
+      particle.mesh.material.color.setHex(color);
+      particle.mesh.material.emissive.setHex(color);
     });
     updateStatusText(state);
   }
@@ -542,6 +676,7 @@
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
     controls.update();
+    flowParticles.forEach(particle => moveArrow(particle, time));
     if (selectionRing && selectionRing.visible) {
       const pulse = 1 + Math.sin(time * 2.4) * 0.07;
       selectionRing.scale.set(pulse, pulse, 1);
@@ -549,6 +684,13 @@
       selectionBeam.material.opacity = 0.1 + Math.sin(time * 1.8) * 0.035;
     }
     renderer.render(scene, camera);
+  }
+
+  function moveArrow(particle, time) {
+    const progress = (time * particle.speed + particle.offset) % 1;
+    particle.curve.getPointAt(progress, particle.mesh.position);
+    const tangent = particle.curve.getTangentAt(progress);
+    particle.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
   }
 
   init();

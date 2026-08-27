@@ -270,56 +270,6 @@
               </div>
               </div>
             </div>
-            <div class="power-bay topology-bay" aria-label="UPS实物层">
-              <div class="bay-head">
-                <strong>架构实物 3D 展示</strong>
-                <span>UPS 主机 / 输入配电柜 / 输出配电柜 / 末端负载</span>
-              </div>
-              <div class="bay-grid">
-                <div class="cabinet-model cabinet-type-ups bay-rack">
-                  <div class="cabinet-head"><span>UPS1</span><span class="cabinet-leds"><span></span><span></span><span></span></span></div>
-                  <div class="cabinet-screen"></div>
-                  <div class="cabinet-vents"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                  <div class="cabinet-plate"></div>
-                  <div class="cabinet-base"><span>输入配电柜 1</span><span>UPS</span></div>
-                </div>
-                <div class="cabinet-model cabinet-type-ups bay-rack">
-                  <div class="cabinet-head"><span>UPS2</span><span class="cabinet-leds"><span></span><span></span><span></span></span></div>
-                  <div class="cabinet-screen"></div>
-                  <div class="cabinet-vents"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                  <div class="cabinet-plate"></div>
-                  <div class="cabinet-base"><span>输入配电柜 2</span><span>UPS</span></div>
-                </div>
-                <div class="cabinet-model cabinet-type-ups bay-rack">
-                  <div class="cabinet-head"><span>UPS3</span><span class="cabinet-leds"><span></span><span></span><span></span></span></div>
-                  <div class="cabinet-screen"></div>
-                  <div class="cabinet-vents"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                  <div class="cabinet-plate"></div>
-                  <div class="cabinet-base"><span>输入配电柜 3</span><span>UPS</span></div>
-                </div>
-                <div class="cabinet-model cabinet-type-bypass bay-rack">
-                  <div class="cabinet-head"><span>输出柜 1</span><span class="cabinet-leds"><span></span><span></span><span></span></span></div>
-                  <div class="cabinet-screen"></div>
-                  <div class="cabinet-vents"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                  <div class="cabinet-plate"></div>
-                  <div class="cabinet-base"><span>双电源负载 1 区</span><span>OUT</span></div>
-                </div>
-                <div class="cabinet-model cabinet-type-bypass bay-rack">
-                  <div class="cabinet-head"><span>输出柜 2</span><span class="cabinet-leds"><span></span><span></span><span></span></span></div>
-                  <div class="cabinet-screen"></div>
-                  <div class="cabinet-vents"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                  <div class="cabinet-plate"></div>
-                  <div class="cabinet-base"><span>双电源负载 2 区</span><span>OUT</span></div>
-                </div>
-                <div class="cabinet-model cabinet-type-battery bay-rack">
-                  <div class="cabinet-head"><span>输出柜 3</span><span class="cabinet-leds"><span></span><span></span><span></span></span></div>
-                  <div class="cabinet-screen"></div>
-                  <div class="cabinet-vents"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                  <div class="cabinet-plate"></div>
-                  <div class="cabinet-base"><span>双电源负载 3 区</span><span>OUT</span></div>
-                </div>
-              </div>
-            </div>
             <div class="topology-legend">
               <span class="legend-item"><span class="legend-swatch green"></span>在线供电路径</span>
               <span class="legend-item"><span class="legend-swatch amber"></span>电池 / 旁路运行</span>
@@ -353,7 +303,7 @@
           <div class="ups-rack">
             <div class="rack-top">
               <div>
-                <div class="device-name" id="deviceName">华为 FusionPower 智能 UPS - A01</div>
+                <div class="device-name" id="deviceName">华为 UPS5000E</div>
                 <div class="device-state" id="deviceState">市电正常，逆变器在线，电池充电待机</div>
               </div>
               <div class="device-lights">
@@ -429,17 +379,9 @@
                 <div id="ups3dContainer" aria-label="全站 UPS 实物阵列 3D 展示"></div>
                 <div class="ups3d-hud">
                   <div class="ups3d-hud-title" id="ups3dHudTitle">全站 UPS 实物阵列</div>
-                  <div class="ups3d-hud-meta" id="ups3dHudMeta">1# - 10# UPS 供电区域 · 点击机柜查看详情</div>
+                  <div class="ups3d-hud-meta" id="ups3dHudMeta">进电：变压器 → UPS → 输出：配电柜 / 负载 · 点击机柜查看详情</div>
                   <div class="ups3d-hud-status" id="ups3dHudStatus">在线供电 · 电池 96%</div>
                 </div>
-              </div>
-            </div>
-            <div class="arch3d-wrap" id="arch3dWrap">
-              <div id="arch3dContainer" aria-label="架构实物 3D 模拟展示"></div>
-              <div class="arch3d-hud">
-                <div class="arch3d-hud-title" id="arch3dHudTitle">架构实物 3D 展示</div>
-                <div class="arch3d-hud-meta" id="arch3dHudMeta">UPS 主机 / 输入配电柜 / 输出配电柜 / 末端负载</div>
-                <div class="arch3d-hud-status" id="arch3dHudStatus">在线供电 · 点击 UPS 查看设备详情</div>
               </div>
             </div>
           </div>
@@ -638,7 +580,6 @@
   <script src="app.js"></script>
   <script src="power3d.js"></script>
   <script src="ups3d.js"></script>
-  <script src="arch3d.js"></script>
 
 </body>
 </html>

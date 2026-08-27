@@ -566,22 +566,92 @@
     return { mesh, curve, material };
   }
 
+  class AngledCurve extends THREE.Curve {
+    constructor(points) {
+      super();
+      this.points = points;
+      this.segments = [];
+      this.totalLength = 0;
+      for (let i = 0; i < points.length - 1; i += 1) {
+        const a = points[i];
+        const b = points[i + 1];
+        const length = a.distanceTo(b);
+        this.segments.push({ a, b, length, start: this.totalLength });
+        this.totalLength += length;
+      }
+    }
+
+    getPoint(t, optionalTarget) {
+      const target = optionalTarget || new THREE.Vector3();
+      const distance = Math.min(this.totalLength, Math.max(0, t * this.totalLength));
+      let segment = this.segments[this.segments.length - 1];
+      for (let i = 0; i < this.segments.length; i += 1) {
+        const candidate = this.segments[i];
+        if (distance <= candidate.start + candidate.length) {
+          segment = candidate;
+          break;
+        }
+      }
+      const local = segment.length
+        ? Math.min(1, Math.max(0, (distance - segment.start) / segment.length))
+        : 0;
+      return target.copy(segment.a).lerp(segment.b, local);
+    }
+
+    getTangent(t) {
+      const distance = Math.min(this.totalLength, Math.max(0, t * this.totalLength));
+      let segment = this.segments[this.segments.length - 1];
+      for (let i = 0; i < this.segments.length; i += 1) {
+        const candidate = this.segments[i];
+        if (distance <= candidate.start + candidate.length) {
+          segment = candidate;
+          break;
+        }
+      }
+      if (!segment.length) return new THREE.Vector3(0, 1, 0);
+      return new THREE.Vector3().subVectors(segment.b, segment.a).normalize();
+    }
+  }
+
+  function createAngledPath(points, color, width) {
+    const curve = new AngledCurve(points);
+    const geometry = new THREE.TubeGeometry(curve, Math.max(40, points.length * 18), width || 0.13, 8, false);
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 0.5,
+      transparent: true,
+      opacity: 0.92
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.userData.curve = curve;
+    return { mesh, curve, material };
+  }
+
   function buildRoutePaths() {
     ROUTES.forEach((route, index) => {
       const tx = transformerX(index);
       const upsX = tx + 0.55;
       const outX = tx - 0.55;
-      const main = createPath([
+      const main = createAngledPath([
         new THREE.Vector3(tx, 2.0, -4.4),
+        new THREE.Vector3(tx, 3.0, -4.4),
         new THREE.Vector3(tx, 3.0, -2.2),
+        new THREE.Vector3(upsX, 3.0, -0.2),
         new THREE.Vector3(upsX, 2.1, -0.2),
+        new THREE.Vector3(upsX, 3.0, -0.2),
+        new THREE.Vector3(outX, 3.0, 2.0),
         new THREE.Vector3(outX, 2.1, 2.0),
+        new THREE.Vector3(outX, 3.0, 2.0),
+        new THREE.Vector3(tx, 3.0, 4.2),
         new THREE.Vector3(tx, 1.0, 4.2)
       ], COLORS.info, 0.13);
 
-      const battery = createPath([
+      const battery = createAngledPath([
         new THREE.Vector3(10.2, 2.2, 1.7),
+        new THREE.Vector3(10.2, 3.0, 1.7),
         new THREE.Vector3(10.2, 3.0, -0.2),
+        new THREE.Vector3(upsX, 3.0, -0.2),
         new THREE.Vector3(upsX, 2.1, -0.2)
       ], COLORS.warn, 0.1);
 

@@ -312,7 +312,7 @@
       });
       [-0.42, 0.42].forEach((offset, index) => {
         const conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.24, 12), conduitMat);
-        conduit.position.set(offset, h / 2 + 0.14, 0);
+        conduit.position.set(offset, h / 2 + 0.14, index === 0 ? -0.45 : 0.45);
         group.add(conduit);
         const tip = new THREE.Mesh(
           new THREE.CylinderGeometry(0.05, 0.08, 0.08, 10),
@@ -322,7 +322,7 @@
             emissiveIntensity: 0.9
           })
         );
-        tip.position.set(offset, h / 2 + 0.3, 0);
+        tip.position.set(offset, h / 2 + 0.3, index === 0 ? -0.45 : 0.45);
         group.add(tip);
       });
     }
@@ -406,17 +406,6 @@
     });
 
     const busY = 3.1;
-    const inputBus = createPath([
-      new THREE.Vector3(-8.6, busY, -5.4),
-      new THREE.Vector3(8.6, busY, -5.4)
-    ], 0.16, COLORS.info);
-    scene.add(inputBus.mesh);
-    const outputBus = createPath([
-      new THREE.Vector3(-8.6, busY, 5.4),
-      new THREE.Vector3(8.6, busY, 5.4)
-    ], 0.16, COLORS.ok);
-    scene.add(outputBus.mesh);
-
     const trayMat = new THREE.MeshStandardMaterial({
       color: 0x1a2632,
       metalness: 0.65,
@@ -427,62 +416,77 @@
       metalness: 0.6,
       roughness: 0.45
     });
-    [-5.4, 5.4].forEach(z => {
-      const tray = new THREE.Mesh(new THREE.BoxGeometry(18, 0.14, 0.5), trayMat);
-      tray.position.set(0, 3.4, z);
+    const chevronXs = [-8, -6, -4, -2, 0, 2, 4, 6, 8];
+
+    for (let row = 0; row < FLEET_ROWS; row += 1) {
+      const rowZ = -3.8 + row * 1.6;
+      const inputBus = createPath([
+        new THREE.Vector3(-8.6, busY, rowZ - 0.45),
+        new THREE.Vector3(8.6, busY, rowZ - 0.45)
+      ], 0.16, COLORS.info);
+      scene.add(inputBus.mesh);
+      addFlowArrows(inputBus.curve, 8, COLORS.info);
+
+      const outputBus = createPath([
+        new THREE.Vector3(-8.6, busY, rowZ + 0.45),
+        new THREE.Vector3(8.6, busY, rowZ + 0.45)
+      ], 0.16, COLORS.ok);
+      scene.add(outputBus.mesh);
+      addFlowArrows(outputBus.curve, 8, COLORS.ok);
+
+      chevronXs.forEach(x => {
+        const chevron = new THREE.Mesh(
+          new THREE.ConeGeometry(0.16, 0.42, 10),
+          new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 0.7 })
+        );
+        chevron.position.set(x, busY + 0.18, rowZ - 0.45);
+        chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
+        scene.add(chevron);
+        chevrons.push(chevron);
+        const chevronOut = new THREE.Mesh(
+          new THREE.ConeGeometry(0.16, 0.42, 10),
+          new THREE.MeshStandardMaterial({ color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.7 })
+        );
+        chevronOut.position.set(x, busY + 0.18, rowZ + 0.45);
+        chevronOut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
+        scene.add(chevronOut);
+        chevrons.push(chevronOut);
+      });
+
+      const tray = new THREE.Mesh(new THREE.BoxGeometry(18, 0.14, 1.5), trayMat);
+      tray.position.set(0, 3.4, rowZ);
       tray.castShadow = true;
       scene.add(tray);
       [-8, 0, 8].forEach(x => {
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.3, 0.14), supportMat);
-        post.position.set(x, 1.65, z);
+        post.position.set(x, 1.65, rowZ);
         scene.add(post);
       });
-    });
-
-    [-8, -6, -4, -2, 0, 2, 4, 6, 8].forEach(x => {
-      const chevron = new THREE.Mesh(
-        new THREE.ConeGeometry(0.16, 0.42, 10),
-        new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 0.7 })
-      );
-      chevron.position.set(x, busY + 0.18, -5.4);
-      chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
-      scene.add(chevron);
-      chevrons.push(chevron);
-      const chevronOut = new THREE.Mesh(
-        new THREE.ConeGeometry(0.16, 0.42, 10),
-        new THREE.MeshStandardMaterial({ color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.7 })
-      );
-      chevronOut.position.set(x, busY + 0.18, 5.4);
-      chevronOut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
-      scene.add(chevronOut);
-      chevrons.push(chevronOut);
-    });
-
-    addFlowArrows(inputBus.curve, 14, COLORS.info);
-    addFlowArrows(outputBus.curve, 14, COLORS.ok);
+    }
 
     DEVICES.forEach((device, index) => {
       const pos = devicePosition(index);
+      const rowZ = -3.8 + Math.floor(index / FLEET_COLS) * 1.6;
       const inputFeeder = createPath([
-        new THREE.Vector3(pos.x - 0.42, busY, -5.4),
-        new THREE.Vector3(pos.x - 0.42, 2.35, pos.z)
+        new THREE.Vector3(pos.x - 0.42, busY, rowZ - 0.45),
+        new THREE.Vector3(pos.x - 0.42, 2.35, rowZ - 0.45)
       ], 0.09, COLORS.info);
       scene.add(inputFeeder.mesh);
       addFlowArrows(inputFeeder.curve, 2, COLORS.info);
 
       const outputFeeder = createPath([
-        new THREE.Vector3(pos.x + 0.42, 2.35, pos.z),
-        new THREE.Vector3(pos.x + 0.42, busY, 5.4)
+        new THREE.Vector3(pos.x + 0.42, 2.35, rowZ + 0.45),
+        new THREE.Vector3(pos.x + 0.42, busY, rowZ + 0.45)
       ], 0.09, COLORS.ok);
       scene.add(outputFeeder.mesh);
       addFlowArrows(outputFeeder.curve, 2, COLORS.ok);
     });
 
     const inLabel = makeLabel('进电输入', 2.2);
-    inLabel.position.set(-12.2, 3.8, -5.4);
+    inLabel.position.set(-12.2, 3.8, -4.25);
     scene.add(inLabel);
     const outLabel = makeLabel('输出负载', 2.2);
-    outLabel.position.set(-12.2, 3.8, 5.4);
+    outLabel.position.set(-12.2, 3.8, 4.65);
     scene.add(outLabel);
 
     const caption = makeLabel('全站 UPS 实物阵列 · 46 台', 5);

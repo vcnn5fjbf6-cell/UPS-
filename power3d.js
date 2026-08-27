@@ -814,7 +814,8 @@
           mesh: arrow,
           curve: battery.curve,
           offset: i / 4,
-          speed: 0.06 + i * 0.012
+          speed: 0.06 + i * 0.012,
+          reversed: false
         });
       }
 
@@ -1407,19 +1408,20 @@
       item.mainMat.color.setHex(color);
       item.mainMat.emissive.setHex(color);
       item.mainMat.emissiveIntensity = active ? 1.0 : 0.5;
-      const batteryOn = active && (!state.mainsOn || state.fault);
-      item.battery.mesh.visible = batteryOn;
-      if (batteryOn) {
-        const batteryColor = state.fault ? COLORS.bad : COLORS.warn;
+      const batteryDischarge = !state.mainsOn || state.fault;
+      const batteryColor = state.fault ? COLORS.bad : batteryDischarge ? COLORS.warn : COLORS.info;
+      item.battery.mesh.visible = active;
+      if (active) {
         item.batteryMat.color.setHex(batteryColor);
         item.batteryMat.emissive.setHex(batteryColor);
-        item.batteryMat.emissiveIntensity = 0.85;
+        item.batteryMat.emissiveIntensity = batteryDischarge ? 0.85 : 0.45;
       }
       item.batteryParticles.forEach(particle => {
-        particle.mesh.visible = batteryOn;
-        if (batteryOn) {
-          particle.mesh.material.color.setHex(state.fault ? COLORS.bad : COLORS.warn);
-          particle.mesh.material.emissive.setHex(state.fault ? COLORS.bad : COLORS.warn);
+        particle.mesh.visible = active;
+        particle.reversed = !batteryDischarge;
+        if (active) {
+          particle.mesh.material.color.setHex(batteryColor);
+          particle.mesh.material.emissive.setHex(batteryColor);
         }
       });
       item.particles.forEach(particle => {
@@ -1553,9 +1555,11 @@
   }
 
   function moveArrow(particle, time) {
-    const progress = (time * particle.speed + particle.offset) % 1;
+    const raw = (time * particle.speed + particle.offset) % 1;
+    const progress = particle.reversed ? 1 - raw : raw;
     particle.curve.getPointAt(progress, particle.mesh.position);
     const tangent = particle.curve.getTangentAt(progress);
+    if (particle.reversed) tangent.negate();
     particle.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
   }
 

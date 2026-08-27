@@ -1,9 +1,46 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import base64
+import json
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlparse
+from urllib.request import Request, urlopen
 
 
 HOST = "127.0.0.1"
 PORT = 8000
+
+ZHIHANG_API = {
+    "internal": "http://gateway.meta42.indc.vnet.com",
+    "external": "https://digitaltwin.meta42.indc.vnet.com/openapi",
+}
+ZHIHANG_AUTH = ("root", "taosdata")
+ZHIHANG_ENDPOINTS = [
+    "GET /cmdb/objRemote/getObjList",
+    "POST /cmdb/insRemote/getInsByDomainCodeAndObjIds",
+    "POST /device_twin/reported/list",
+    "POST /tsdb/point_data/v2/search",
+    "POST /tsdb/point_data/v2/sql/search",
+    "POST /cmdb/insRemote/getPointDataByInsStandardIds",
+    "POST /cmdb/insAsstRemote/getDownInsByAsstIdBatch",
+    "POST /cmdb/insRemote/list",
+]
+
+
+def zhihang_request(method, path, payload=None, mode="external"):
+    base_url = ZHIHANG_API.get(mode, ZHIHANG_API["external"])
+    headers = {}
+    data = None
+    if payload is not None:
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    token = base64.b64encode(
+        f"{ZHIHANG_AUTH[0]}:{ZHIHANG_AUTH[1]}".encode("utf-8")
+    ).decode("ascii")
+    headers["Authorization"] = f"Basic {token}"
+    request = Request(f"{base_url}{path}", data=data, headers=headers, method=method)
+    with urlopen(request, timeout=30) as response:
+        return json.loads(response.read().decode("utf-8"))
 
 
 class StaticHandler(SimpleHTTPRequestHandler):
@@ -19,6 +56,77 @@ class StaticHandler(SimpleHTTPRequestHandler):
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
         super().end_headers()
+
+    def send_json(self, payload, status=200):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def query_mode(self):
+        parsed = urlparse(self.path)
+        return (parse_qs(parsed.query).get("mode") or ["external"])[0]
+
+    def read_json_body(self):
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        if not length:
+            return {}
+        return json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+
+    def do_GET(self):
+        if self.path.startswith("/api/zhihang/status"):
+            self.send_json({"ok": True, "endpoints": ZHIHANG_ENDPOINTS})
+            return
+        if self.path.startswith("/api/zhihang/models"):
+            try:
+                result = zhihang_request("GET", "/cmdb/objRemote/getObjList", mode=self.query_mode())
+            except (HTTPError, URLError, ValueError, OSError) as error:
+                self.send_json({"ok": False, "error": str(error)}, status=502)
+                return
+            self.send_json({"ok": True, "count": len(result) if isinstance(result, list) else 0, "data": result})
+            return
+        super().do_GET()
+
+    def do_POST(self):
+        if self.path.startswith("/api/zhihang/realtime"):
+            body = self.read_json_body()
+            try:
+                result = zhihang_request(
+                    "POST",
+                    "/device_twin/reported/list",
+                    body.get("points", []),
+                    mode=self.query_mode(),
+                )
+            except (HTTPError, URLError, ValueError, OSError) as error:
+                self.send_json({"ok": False, "error": str(error)}, status=502)
+                return
+            self.send_json({"ok": True, "data": result})
+            return
+        if self.path.startswith("/api/zhihang/devices"):
+            body = self.read_json_body()
+            try:
+                result = zhihang_request(
+                    "POST",
+                    "/cmdb/insRemote/getInsByDomainCodeAndObjIds",
+                    {
+                        "page": 1,
+                        "size": 999999,
+                        "objIds": body.get("objIds", []),
+                        "domainCode": body.get("domainCode", ""),
+                        "isQueryProperties": False,
+                        "isQueryPointData": False,
+                    },
+                    mode=self.query_mode(),
+                )
+            except (HTTPError, URLError, ValueError, OSError) as error:
+                self.send_json({"ok": False, "error": str(error)}, status=502)
+                return
+            self.send_json({"ok": True, "data": result})
+            return
+        self.send_json({"ok": False, "error": "not found"}, status=404)
 
 
 if __name__ == "__main__":

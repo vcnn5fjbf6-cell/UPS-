@@ -1359,6 +1359,29 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     document.getElementById('sidebarSettingsBtn').addEventListener('click', toggleSettingsPanel);
     document.getElementById('sidebarResetBtn').addEventListener('click', resetAll);
     els.sidebarLogoutBtn.addEventListener('click', () => lockSystem('已退出登录，请重新输入账号。'));
+    const zhihangTestBtn = document.getElementById('zhihangTestBtn');
+    const zhihangQueryResult = document.getElementById('zhihangQueryResult');
+    const zhihangQueryBadge = document.getElementById('zhihangQueryBadge');
+    if (zhihangTestBtn) {
+      zhihangTestBtn.addEventListener('click', async () => {
+        if (zhihangQueryResult) zhihangQueryResult.textContent = '正在检查智航接口状态...';
+        try {
+          const response = await fetch('/api/zhihang/status');
+          const data = await response.json();
+          if (zhihangQueryResult) {
+            zhihangQueryResult.textContent = data.ok
+              ? `接口已接入：${data.endpoints.length} 个核心接口`
+              : `查询失败：${data.error || '未知错误'}`;
+          }
+          if (zhihangQueryBadge) {
+            zhihangQueryBadge.textContent = data.ok ? '接口连通正常' : '接口待配置';
+          }
+        } catch (error) {
+          if (zhihangQueryResult) zhihangQueryResult.textContent = `查询失败：${error.message}`;
+          if (zhihangQueryBadge) zhihangQueryBadge.textContent = '接口待配置';
+        }
+      });
+    }
     document.getElementById('saveSettingsBtn').addEventListener('click', applySettings);
     if (els.routeModalClose) {
       els.routeModalClose.addEventListener('click', closeRouteModal);

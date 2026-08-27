@@ -311,6 +311,19 @@
       line-height: 1.35;
     }
 
+    .zhihang-query-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .zhihang-query-row .muted {
+      font-size: 12px;
+      line-height: 1.5;
+      min-height: 18px;
+    }
+
     .brand h1 {
       margin: 0;
       font-size: 22px;

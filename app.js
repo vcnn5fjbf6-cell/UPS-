@@ -1533,7 +1533,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     });
     document.getElementById('sidebarAiBtn').addEventListener('click', () => runAiInspection(true));
     document.getElementById('sidebarExportBtn').addEventListener('click', exportInspectionData);
-    document.getElementById('sidebarSettingsBtn').addEventListener('click', toggleSettingsPanel);
     document.getElementById('sidebarResetBtn').addEventListener('click', resetAll);
     els.sidebarLogoutBtn.addEventListener('click', () => lockSystem('已退出登录，请重新输入账号。'));
     const zhihangDeviceBtn = document.getElementById('zhihangDeviceBtn');

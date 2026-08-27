@@ -57,7 +57,7 @@
 
   function createPath(points, width, color) {
     const curve = new THREE.CatmullRomCurve3(points);
-    const geometry = new THREE.TubeGeometry(curve, 48, width || 0.1, 8, false);
+    const geometry = new THREE.TubeGeometry(curve, 48, width || 0.05, 8, false);
     const material = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
@@ -77,7 +77,7 @@
         emissive: color,
         emissiveIntensity: 1.5
       });
-      const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.34, 10), material);
+      const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.22, 10), material);
       scene.add(arrow);
       flowParticles.push({
         mesh: arrow,
@@ -423,20 +423,20 @@
       const inputBus = createPath([
         new THREE.Vector3(-8.6, busY, rowZ - 0.45),
         new THREE.Vector3(8.6, busY, rowZ - 0.45)
-      ], 0.16, COLORS.info);
+      ], 0.08, COLORS.info);
       scene.add(inputBus.mesh);
       addFlowArrows(inputBus.curve, 8, COLORS.info);
 
       const outputBus = createPath([
         new THREE.Vector3(-8.6, busY, rowZ + 0.45),
         new THREE.Vector3(8.6, busY, rowZ + 0.45)
-      ], 0.16, COLORS.ok);
+      ], 0.08, COLORS.ok);
       scene.add(outputBus.mesh);
       addFlowArrows(outputBus.curve, 8, COLORS.ok);
 
       chevronXs.forEach(x => {
         const chevron = new THREE.Mesh(
-          new THREE.ConeGeometry(0.16, 0.42, 10),
+          new THREE.ConeGeometry(0.1, 0.25, 10),
           new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 0.7 })
         );
         chevron.position.set(x, busY + 0.18, rowZ - 0.45);
@@ -444,7 +444,7 @@
         scene.add(chevron);
         chevrons.push(chevron);
         const chevronOut = new THREE.Mesh(
-          new THREE.ConeGeometry(0.16, 0.42, 10),
+          new THREE.ConeGeometry(0.1, 0.25, 10),
           new THREE.MeshStandardMaterial({ color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.7 })
         );
         chevronOut.position.set(x, busY + 0.18, rowZ + 0.45);
@@ -470,14 +470,14 @@
       const inputFeeder = createPath([
         new THREE.Vector3(pos.x - 0.42, busY, rowZ - 0.45),
         new THREE.Vector3(pos.x - 0.42, 2.55, rowZ - 0.45)
-      ], 0.09, COLORS.info);
+      ], 0.045, COLORS.info);
       scene.add(inputFeeder.mesh);
       addFlowArrows(inputFeeder.curve, 2, COLORS.info);
 
       const outputFeeder = createPath([
         new THREE.Vector3(pos.x + 0.42, 2.55, rowZ + 0.45),
         new THREE.Vector3(pos.x + 0.42, busY, rowZ + 0.45)
-      ], 0.09, COLORS.ok);
+      ], 0.045, COLORS.ok);
       scene.add(outputFeeder.mesh);
       addFlowArrows(outputFeeder.curve, 2, COLORS.ok);
     });

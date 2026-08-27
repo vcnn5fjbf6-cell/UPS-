@@ -554,7 +554,7 @@
 
   function createPath(points, color, width) {
     const curve = new THREE.CatmullRomCurve3(points);
-    const geometry = new THREE.TubeGeometry(curve, 80, width || 0.13, 8, false);
+    const geometry = new THREE.TubeGeometry(curve, 80, width || 0.07, 8, false);
     const material = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
@@ -616,7 +616,7 @@
 
   function createAngledPath(points, color, width) {
     const curve = new AngledCurve(points);
-    const geometry = new THREE.TubeGeometry(curve, Math.max(40, points.length * 18), width || 0.13, 8, false);
+    const geometry = new THREE.TubeGeometry(curve, Math.max(40, points.length * 18), width || 0.07, 8, false);
     const material = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
@@ -646,7 +646,7 @@
         new THREE.Vector3(outX, 8.0, 2.0),
         new THREE.Vector3(tx, 8.0, 4.2),
         new THREE.Vector3(tx, 1.95, 4.2)
-      ], COLORS.info, 0.13);
+      ], COLORS.info, 0.07);
 
       const battery = createAngledPath([
         new THREE.Vector3(10.2, 2.4, 1.7),
@@ -654,7 +654,7 @@
         new THREE.Vector3(10.2, 8.0, -0.2),
         new THREE.Vector3(upsX, 8.0, -0.2),
         new THREE.Vector3(upsX, 2.5, -0.2)
-      ], COLORS.warn, 0.1);
+      ], COLORS.warn, 0.055);
 
       const group = new THREE.Group();
       group.add(main.mesh, battery.mesh);
@@ -667,7 +667,7 @@
           emissive: COLORS.info,
           emissiveIntensity: 1.6
         });
-        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 10), material);
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.24, 10), material);
         arrow.visible = false;
         group.add(arrow);
         particles.push({
@@ -685,7 +685,7 @@
           emissive: COLORS.warn,
           emissiveIntensity: 1.5
         });
-        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.34, 10), material);
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 10), material);
         arrow.visible = false;
         group.add(arrow);
         batteryParticles.push({
@@ -721,7 +721,7 @@
         emissive: COLORS.ok,
         emissiveIntensity: 1.6
       });
-      const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 10), material);
+      const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.26, 10), material);
       scene.add(arrow);
       mainBusParticles.push({
         mesh: arrow,
@@ -778,7 +778,7 @@
     const cable = createPath([
       new THREE.Vector3(fromX, fromY, fromZ),
       new THREE.Vector3(toX, toY, toZ)
-    ], color, 0.07);
+    ], color, 0.035);
     scene.add(cable.mesh);
     return cable;
   }
@@ -883,11 +883,11 @@
       new THREE.Vector3(-12.2, 3.2, -3.9),
       new THREE.Vector3(-11.5, 2.9, -2.9),
       new THREE.Vector3(-11.0, 8.2, -2.2)
-    ], 0x2b3f52, 0.06);
+    ], 0x2b3f52, 0.03);
     scene.add(pylonCable.mesh);
 
     const busBody = new THREE.Mesh(
-      new THREE.BoxGeometry(28, 0.55, 0.8),
+      new THREE.BoxGeometry(28, 0.28, 0.5),
       new THREE.MeshStandardMaterial({ color: 0x223445, metalness: 0.5, roughness: 0.5 })
     );
     busBody.position.set(1.6, 8.1, -2.2);
@@ -902,7 +902,7 @@
       transparent: true,
       opacity: 0.85
     });
-    const busGlow = new THREE.Mesh(new THREE.BoxGeometry(27, 0.16, 0.42), mainBusMat);
+    const busGlow = new THREE.Mesh(new THREE.BoxGeometry(27, 0.08, 0.22), mainBusMat);
     busGlow.position.set(1.6, 8.17, -2.2);
     scene.add(busGlow);
 
@@ -923,7 +923,7 @@
       emissiveIntensity: 0.7
     });
     for (let x = -11; x <= 14.2; x += 2.8) {
-      const chevron = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.55, 10), chevronMat);
+      const chevron = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 10), chevronMat);
       chevron.position.set(x, 8.27, -2.2);
       chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
       scene.add(chevron);

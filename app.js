@@ -598,27 +598,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.eventCount.textContent = `${state.eventId} 条记录`;
     }
 
-    function renderStdModels() {
-      const grid = document.getElementById('stdModelGrid');
-      if (!grid || !window.zhihangStdModels) return;
-      const models = window.zhihangStdModels;
-      const rows = [
-        { kind: 'UPS', model: models.ups, count: upsDevices.length },
-        { kind: '变压器', model: models.transformer, count: transformerRoutes.length },
-        { kind: 'ATS', model: models.ats, count: transformerRoutes.length },
-        { kind: '电池组', model: models.battery, count: 3 },
-        { kind: '配电柜', model: models.switchboard, count: 20 }
-      ];
-      grid.innerHTML = rows.map(item => `
-        <div class="std-model-card">
-          <span class="kind">${item.kind} · ${item.count}</span>
-          <b>${item.model.name}</b>
-          <code>${item.model.refId} · ${item.model.objId}</code>
-          <small>${item.model.className} / ${item.model.subject}</small>
-        </div>
-      `).join('');
-    }
-
     function pointValue(payload, id, fallback) {
       const entry = payload && payload[id];
       if (entry && entry.reported_value !== undefined) {
@@ -1557,37 +1536,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     document.getElementById('sidebarSettingsBtn').addEventListener('click', toggleSettingsPanel);
     document.getElementById('sidebarResetBtn').addEventListener('click', resetAll);
     els.sidebarLogoutBtn.addEventListener('click', () => lockSystem('已退出登录，请重新输入账号。'));
-    const zhihangTestBtn = document.getElementById('zhihangTestBtn');
-    const zhihangQueryResult = document.getElementById('zhihangQueryResult');
-    const zhihangQueryBadge = document.getElementById('zhihangQueryBadge');
-    if (zhihangTestBtn) {
-      zhihangTestBtn.addEventListener('click', async () => {
-        if (zhihangQueryResult) zhihangQueryResult.textContent = '正在检查智航接口状态...';
-        try {
-          const response = await fetch('/api/zhihang/status');
-          const data = await response.json();
-          if (zhihangQueryResult) {
-            zhihangQueryResult.textContent = data.ok
-              ? `接口已接入：${data.endpoints.length} 个核心接口`
-              : `查询失败：${data.error || '未知错误'}`;
-          }
-          if (zhihangQueryBadge) {
-            zhihangQueryBadge.textContent = data.ok ? '接口连通正常' : '接口待配置';
-          }
-        } catch (error) {
-          if (zhihangQueryResult) zhihangQueryResult.textContent = `查询失败：${error.message}`;
-          if (zhihangQueryBadge) zhihangQueryBadge.textContent = '接口待配置';
-        }
-      });
-    }
-    const zhihangSyncBtn = document.getElementById('zhihangSyncBtn');
-    if (zhihangSyncBtn) {
-      zhihangSyncBtn.addEventListener('click', async () => {
-        const resultEl = document.getElementById('zhihangSyncResult');
-        if (resultEl) resultEl.textContent = '正在同步智航实时数据...';
-        await syncZhihangRealtime();
-      });
-    }
     const zhihangDeviceBtn = document.getElementById('zhihangDeviceBtn');
     const zhihangRealtimeBtn = document.getElementById('zhihangRealtimeBtn');
     const zhihangAiBtn = document.getElementById('zhihangAiBtn');
@@ -1634,7 +1582,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     updateClock();
     renderAlarms();
     renderLogs();
-    renderStdModels();
     syncZhihangRealtime();
     drawTrend();
     updateTopology();

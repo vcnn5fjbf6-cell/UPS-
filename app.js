@@ -485,11 +485,21 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     const ZHIHANG_MODELS = {
       ups: { name: '三相UPS', refId: '1.1.5.2', objId: 'OBJ-356', className: '不间断电源', subject: '电气' },
       transformer: { name: '变压器', refId: '1.1.2.1', objId: 'OBJ-342', className: '电力变压器', subject: '电气' },
-      ats: { name: '三相ATS_STS', refId: '1.1.3.3', objId: 'OBJ-346', className: '切换装置', subject: '电气' },
-      battery: { name: '铅酸阀控蓄电池', refId: '1.1.6.1', objId: 'OBJ-360', className: '蓄电池', subject: '电气' },
-      switchboard: { name: '低压配电柜', refId: '1.1.3.1', objId: 'OBJ-343', className: '低压配电', subject: '电气' }
+      ats: { name: '三相ATS/STS', refId: '1.1.3.3', objId: 'OBJ-346', className: '切换装置', subject: '电气' },
+      battery: { name: '铅酸阀控蓄电池组', refId: '1.1.6.1', objId: 'OBJ-360', className: '电池', subject: '电气' },
+      switchboard: { name: '低压配电柜', refId: '1.1.3.1', objId: 'OBJ-343', className: '低压配电', subject: '电气' },
+      pdu: { name: '交流PDU', refId: '1.1.8.1', objId: 'OBJ-366', className: 'PDU', subject: '电气' },
+      switchModule: { name: '开关模块', refId: '1.1.3.6', objId: 'OBJ-349', className: '低压配电', subject: '电气' }
     };
     window.zhihangStdModels = ZHIHANG_MODELS;
+
+    transformerRoutes.forEach(route => {
+      route.stdModel = ZHIHANG_MODELS.transformer;
+      route.atsModel = ZHIHANG_MODELS.ats;
+      route.upsModel = ZHIHANG_MODELS.ups;
+      route.outputModel = ZHIHANG_MODELS.switchboard;
+      route.loadModel = ZHIHANG_MODELS.pdu;
+    });
 
     const ZHIHANG_POINTS = {
       inputV: '1.1.5.2.4.1',
@@ -805,8 +815,8 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.routeModalTitle.textContent = route.title;
       els.routeModalPath.textContent = route.path;
       els.routeModalStatus.textContent = `${route.status} / ${liveStatus}`;
-      els.routeModalLoad.textContent = `${route.loadTag} · UPS ${route.upsCount || 1}台`;
-      els.routeModalZone.textContent = `${route.code} 配电图走向（${route.upsCount || 1}台UPS）`;
+      els.routeModalLoad.textContent = `${route.loadTag} · ${route.stdModel.name} / ${route.atsModel.name} / ${route.upsCount || 1}台${route.upsModel.name}`;
+      els.routeModalZone.textContent = `${route.code} 配电图走向（${route.upsCount || 1}台${route.upsModel.name}）`;
       els.routeModalSteps.innerHTML = '';
       route.steps.forEach((step, index) => {
         const stepEl = document.createElement('div');
@@ -839,7 +849,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       selectedUpsDevice = device;
       if (window.UPSFleet3D) window.UPSFleet3D.setDevice(device.id);
 
-      if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
+      if (els.deviceName) els.deviceName.textContent = `华为 三相UPS · ${device.name}（${device.model || 'UPS5000E'}）`;
       if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health} / ${state.dataSource}`;
       if (els.deviceStdModel && device.stdModel) {
         els.deviceStdModel.textContent = `智航模型：${device.stdModel.name} · ${device.stdModel.refId} · ${device.stdModel.objId}`;
@@ -855,7 +865,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       const liveStatus = routeLiveStatus();
       const batteryStatus = state.lowBattery ? '低压预警' : state.mainsOn ? '浮充待机' : '放电供电';
       const health = state.fault ? '逆变异常' : state.lowBattery ? '需关注' : '运行正常';
-      if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
+      if (els.deviceName) els.deviceName.textContent = `华为 三相UPS · ${device.name}（${device.model || 'UPS5000E'}）`;
       if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health} / ${state.dataSource}`;
       if (els.deviceStdModel && device.stdModel) {
         els.deviceStdModel.textContent = `智航模型：${device.stdModel.name} · ${device.stdModel.refId} · ${device.stdModel.objId}`;
@@ -976,7 +986,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       if (els.routeTitle) els.routeTitle.textContent = route.title;
       if (els.routePath) els.routePath.textContent = route.path;
       if (els.routeStatus) els.routeStatus.textContent = route.status;
-      if (els.routeLoad) els.routeLoad.textContent = `${route.loadTag} · UPS ${route.upsCount || 1}台 / ${liveStatus}`;
+      if (els.routeLoad) els.routeLoad.textContent = `${route.loadTag} · ${route.stdModel.name} → ${route.atsModel.name} → ${route.upsCount || 1}台${route.upsModel.name} / ${liveStatus}`;
       if (refreshSteps && els.routeSteps) {
         els.routeSteps.innerHTML = '';
         route.steps.forEach((step, index) => {

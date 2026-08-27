@@ -399,7 +399,7 @@
       createCabinet({
         x: pos.x,
         z: pos.z,
-        label: `${device.name} · ${device.model || 'UPS5000E'}`,
+        label: `${device.name} · 三相UPS · ${device.model || 'UPS5000E'}`,
         deviceId: device.id,
         kind: 'ups'
       });
@@ -593,7 +593,7 @@
 
     const device = DEVICES[index];
     if (device) {
-      hud.title.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
+      hud.title.textContent = `华为 三相UPS · ${device.name}（${device.model || 'UPS5000E'}）`;
       hud.meta.textContent = `${device.transformer} / ${device.model || 'UPS5000E'} / 智航 ${device.stdModel ? device.stdModel.refId : '1.1.5.2'} / 输入 ${device.input} / 输出 ${device.output}`;
       updateStatusText(lastState);
     }

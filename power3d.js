@@ -943,7 +943,7 @@
       w: 1.8,
       h: 1.6,
       d: 1.0,
-      label: '油机 / ATS',
+      label: '三相ATS/STS',
       kind: 'ats'
     });
 
@@ -952,27 +952,27 @@
       createTransformer({
         x: tx,
         z: -4.4,
-        label: route.code,
+        label: `${route.code} · 变压器`,
         routeId: route.id
       });
       createCabinet({
         x: tx + 0.55,
         z: -0.2,
-        label: `${index + 1}#UPS`,
+        label: `${index + 1}#UPS · 三相UPS`,
         routeId: route.id,
         kind: 'ups'
       });
       createCabinet({
         x: tx - 0.55,
         z: 2.0,
-        label: `输出柜 ${index + 1}`,
+        label: `低压配电柜 ${index + 1}`,
         routeId: route.id,
         kind: 'output'
       });
       createLoadBlock({
         x: tx,
         z: 4.2,
-        label: `负载 ${index + 1}`,
+        label: `交流PDU ${index + 1}`,
         routeId: route.id
       });
     });
@@ -981,7 +981,7 @@
       createBatteryBank({
         x,
         z: 2.0,
-        label: `电池组 ${index + 1}`
+        label: `铅酸阀控蓄电池组 ${index + 1}`
       });
     });
 

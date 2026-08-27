@@ -571,6 +571,27 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.eventCount.textContent = `${state.eventId} 条记录`;
     }
 
+    function renderStdModels() {
+      const grid = document.getElementById('stdModelGrid');
+      if (!grid || !window.zhihangStdModels) return;
+      const models = window.zhihangStdModels;
+      const rows = [
+        { kind: 'UPS', model: models.ups, count: upsDevices.length },
+        { kind: '变压器', model: models.transformer, count: transformerRoutes.length },
+        { kind: 'ATS', model: models.ats, count: transformerRoutes.length },
+        { kind: '电池组', model: models.battery, count: 3 },
+        { kind: '配电柜', model: models.switchboard, count: 20 }
+      ];
+      grid.innerHTML = rows.map(item => `
+        <div class="std-model-card">
+          <span class="kind">${item.kind} · ${item.count}</span>
+          <b>${item.model.name}</b>
+          <code>${item.model.refId} · ${item.model.objId}</code>
+          <small>${item.model.className} / ${item.model.subject}</small>
+        </div>
+      `).join('');
+    }
+
     function syncSidebar() {
       const modeText = state.fault ? '故障旁路' : state.mainsOn ? '在线供电' : '电池供电';
       const scoreText = String(aiHistory[0]?.score ?? 96);
@@ -1374,6 +1395,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     updateClock();
     renderAlarms();
     renderLogs();
+    renderStdModels();
     drawTrend();
     updateTopology();
     runAiInspection(false);

@@ -229,6 +229,88 @@
       line-height: 1.4;
     }
 
+    .std-model-strip {
+      max-width: 1680px;
+      margin: 0 auto 14px;
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(99, 179, 255, 0.07), transparent 18%), var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .std-model-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .std-model-head strong {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .std-model-head span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .std-model-badge {
+      flex: 0 0 auto;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(73, 209, 125, 0.3);
+      background: rgba(73, 209, 125, 0.1);
+      color: #bbf7d0;
+      font-size: 12px;
+    }
+
+    .std-model-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .std-model-card {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      padding: 10px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .std-model-card .kind {
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .std-model-card b {
+      font-size: 14px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .std-model-card code {
+      color: #a8c9ee;
+      font-size: 12px;
+    }
+
+    .std-model-card small {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
     .brand h1 {
       margin: 0;
       font-size: 22px;
@@ -2364,6 +2446,10 @@
         grid-template-columns: 1fr;
       }
 
+      .std-model-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
       .device-stage {
         grid-template-columns: 1fr;
       }
@@ -2401,6 +2487,8 @@
       .front-panel > .meter-stack { grid-template-columns: 1fr; }
       .front-panel { min-height: 0; height: auto; }
       .summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .std-model-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .std-model-head { flex-direction: column; align-items: flex-start; }
       .ai-section,
       .bottom {
         grid-template-columns: 1fr;

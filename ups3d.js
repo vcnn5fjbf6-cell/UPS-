@@ -405,7 +405,7 @@
       });
     });
 
-    const busY = 3.1;
+    const busY = 8.1;
     const trayMat = new THREE.MeshStandardMaterial({
       color: 0x1a2632,
       metalness: 0.65,
@@ -454,12 +454,12 @@
       });
 
       const tray = new THREE.Mesh(new THREE.BoxGeometry(18, 0.14, 1.5), trayMat);
-      tray.position.set(0, 3.4, rowZ);
+      tray.position.set(0, 8.4, rowZ);
       tray.castShadow = true;
       scene.add(tray);
       [-8, 0, 8].forEach(x => {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.3, 0.14), supportMat);
-        post.position.set(x, 1.65, rowZ);
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 8.3, 0.14), supportMat);
+        post.position.set(x, 4.15, rowZ);
         scene.add(post);
       });
     }
@@ -483,10 +483,10 @@
     });
 
     const inLabel = makeLabel('进电输入', 2.2);
-    inLabel.position.set(-12.2, 3.8, -4.25);
+    inLabel.position.set(-12.2, 8.8, -4.25);
     scene.add(inLabel);
     const outLabel = makeLabel('输出负载', 2.2);
-    outLabel.position.set(-12.2, 3.8, 4.65);
+    outLabel.position.set(-12.2, 8.8, 4.65);
     scene.add(outLabel);
 
     const caption = makeLabel('全站 UPS 实物阵列 · 46 台', 5);

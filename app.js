@@ -112,8 +112,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       aiInputTag: document.getElementById('aiInputTag'),
       aiBatteryTag: document.getElementById('aiBatteryTag'),
       aiFaultTag: document.getElementById('aiFaultTag'),
-      aiFindings: document.getElementById('aiFindings'),
-      aiRunCount: document.getElementById('aiRunCount'),
       sidebarMode: document.getElementById('sidebarMode'),
       sidebarAiScore: document.getElementById('sidebarAiScore'),
       sidebarAlarmCount: document.getElementById('sidebarAlarmCount'),
@@ -910,22 +908,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       });
     }
 
-    function renderAiFindings(items) {
-      els.aiFindings.innerHTML = '';
-      items.forEach(item => {
-        const li = document.createElement('li');
-        li.className = 'finding-item';
-        li.innerHTML = `
-          <div class="top">
-            <strong>${item.title}</strong>
-            <div class="alarm-tag ${item.level}">${item.level === 'bad' ? '高风险' : item.level === 'warn' ? '关注' : '正常'}</div>
-          </div>
-          <p>${item.detail}</p>
-        `;
-        els.aiFindings.appendChild(li);
-      });
-    }
-
     function runAiInspection(manual = false) {
       aiRuns += 1;
       const findings = [];
@@ -971,8 +953,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.aiTime.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
       els.aiRing.style.setProperty('--score-angle', angle + 'deg');
       els.aiStatus.textContent = manual ? '已巡检' : '自动巡检';
-      els.aiRunCount.textContent = `${aiRuns} 次巡检`;
-
       els.aiInputText.textContent = state.mainsOn ? '市电波动在容差内' : '已切换为电池供电';
       els.aiBatteryText.textContent = state.battery < state.settings.batteryWarn ? '电池容量偏低，需关注续航' : '电池容量稳定，充放电曲线平滑';
       els.aiFaultText.textContent = state.fault ? '已识别逆变器异常特征' : '未检测到逆变器或旁路异常';
@@ -981,7 +961,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.aiBatteryTag.textContent = state.battery < state.settings.batteryWarn ? '关注' : '正常';
       els.aiFaultTag.textContent = state.fault ? '异常' : '正常';
 
-      renderAiFindings(findings);
       aiHistory.unshift({ score, verdict, risk, time: els.aiTime.textContent });
       if (aiHistory.length > 10) aiHistory.pop();
 

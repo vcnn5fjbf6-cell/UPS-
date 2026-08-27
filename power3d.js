@@ -48,7 +48,7 @@
   let lastState = { mainsOn: true, fault: false, lowBattery: false, battery: 96, load: 32 };
 
   function transformerX(index) {
-    return -9 + index * 1.95;
+    return -11 + index * 2.8;
   }
 
   function makeLabel(text, scale) {
@@ -158,7 +158,7 @@
   function createCabinet(options) {
     const group = new THREE.Group();
     const w = options.w || 1.7;
-    const h = options.h || 2.1;
+    const h = options.h || 2.5;
     const d = options.d || 1.05;
 
     const bodyMat = new THREE.MeshStandardMaterial({
@@ -326,7 +326,7 @@
   function createTransformer(options) {
     const group = new THREE.Group();
     const w = options.w || 1.9;
-    const h = options.h || 2.0;
+    const h = options.h || 2.4;
     const d = options.d || 1.3;
     const tankMat = new THREE.MeshStandardMaterial({
       color: 0x2a3b46,
@@ -425,14 +425,14 @@
       emissive: COLORS.ok,
       emissiveIntensity: 0.9
     });
-    for (let row = 0; row < 2; row += 1) {
+    for (let row = 0; row < 3; row += 1) {
       for (let col = 0; col < 3; col += 1) {
         const pack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.9), packMat);
-        pack.position.set(-0.55 + col * 0.55, 0.42 + row * 0.72, 0);
+        pack.position.set(-0.55 + col * 0.55, 0.35 + row * 0.65, 0);
         pack.castShadow = true;
         group.add(pack);
         const top = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.07, 0.6), topMat);
-        top.position.set(-0.55 + col * 0.55, 0.72 + row * 0.72, 0);
+        top.position.set(-0.55 + col * 0.55, 0.65 + row * 0.65, 0);
         group.add(top);
       }
     }
@@ -443,13 +443,13 @@
       roughness: 0.55
     });
     [-0.95, 0.95].forEach(zSide => {
-      const side = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.1, 1.45), frameMat);
-      side.position.set(0, 1.05, zSide);
+      const side = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.4, 1.45), frameMat);
+      side.position.set(0, 1.2, zSide);
       side.castShadow = true;
       group.add(side);
     });
     const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.12, 0.14), frameMat);
-    topBar.position.set(0, 2.05, -0.45);
+    topBar.position.set(0, 2.4, -0.45);
     group.add(topBar);
     const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.12, 1.6), frameMat);
     base.position.y = 0.06;
@@ -457,7 +457,7 @@
     group.add(base);
 
     const label = makeLabel(options.label || '');
-    label.position.set(0, 2.65, 0);
+    label.position.set(0, 3.0, 0);
     label.visible = false;
     label.userData.cabinet = group;
     group.add(label);
@@ -491,14 +491,14 @@
       metalness: 0.62,
       roughness: 0.5
     });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.95, 1.25), bodyMat);
-    body.position.y = 0.48;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.55, 1.9, 1.25), bodyMat);
+    body.position.y = 0.95;
     body.castShadow = true;
     body.receiveShadow = true;
     group.add(body);
 
-    const front = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.72, 0.06), darkMetal);
-    front.position.set(0, 0.48, 0.66);
+    const front = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 0.06), darkMetal);
+    front.position.set(0, 0.95, 0.66);
     group.add(front);
     const ventMat = new THREE.MeshStandardMaterial({
       color: 0x0b1118,
@@ -507,7 +507,7 @@
     });
     for (let i = 0; i < 4; i += 1) {
       const vent = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.05, 0.02), ventMat);
-      vent.position.set(0, 0.28 + i * 0.12, 0.71);
+      vent.position.set(0, 0.65 + i * 0.22, 0.71);
       group.add(vent);
     }
 
@@ -517,7 +517,7 @@
       emissiveIntensity: 0.55
     });
     const top = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.08, 1.0), loadMat);
-    top.position.y = 1.0;
+    top.position.y = 1.95;
     group.add(top);
 
     const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 1.4), darkMetal);
@@ -526,7 +526,7 @@
     group.add(base);
 
     const label = makeLabel(options.label || '', 2.0);
-    label.position.set(0, 1.65, 0);
+    label.position.set(0, 2.45, 0);
     label.userData.cabinet = group;
     label.visible = false;
     group.add(label);
@@ -634,25 +634,25 @@
       const upsX = tx + 0.55;
       const outX = tx - 0.55;
       const main = createAngledPath([
-        new THREE.Vector3(tx, 2.0, -4.4),
-        new THREE.Vector3(tx, 3.0, -4.4),
+        new THREE.Vector3(tx, 2.4, -4.4),
+        new THREE.Vector3(tx, 8.0, -4.4),
         new THREE.Vector3(tx, 8.0, -2.2),
         new THREE.Vector3(upsX, 8.0, -0.2),
-        new THREE.Vector3(upsX, 2.1, -0.2),
+        new THREE.Vector3(upsX, 2.5, -0.2),
         new THREE.Vector3(upsX, 8.0, -0.2),
         new THREE.Vector3(outX, 8.0, 2.0),
-        new THREE.Vector3(outX, 2.1, 2.0),
+        new THREE.Vector3(outX, 2.5, 2.0),
         new THREE.Vector3(outX, 8.0, 2.0),
         new THREE.Vector3(tx, 8.0, 4.2),
-        new THREE.Vector3(tx, 1.0, 4.2)
+        new THREE.Vector3(tx, 1.95, 4.2)
       ], COLORS.info, 0.13);
 
       const battery = createAngledPath([
-        new THREE.Vector3(10.2, 2.2, 1.7),
-        new THREE.Vector3(10.2, 3.0, 1.7),
+        new THREE.Vector3(10.2, 2.4, 1.7),
+        new THREE.Vector3(10.2, 8.0, 1.7),
         new THREE.Vector3(10.2, 8.0, -0.2),
         new THREE.Vector3(upsX, 8.0, -0.2),
-        new THREE.Vector3(upsX, 2.1, -0.2)
+        new THREE.Vector3(upsX, 2.5, -0.2)
       ], COLORS.warn, 0.1);
 
       const group = new THREE.Group();
@@ -711,7 +711,7 @@
   function buildBusParticles() {
     const points = [
       new THREE.Vector3(-11.4, 8.1, -2.2),
-      new THREE.Vector3(9.8, 8.1, -2.2)
+      new THREE.Vector3(14.2, 8.1, -2.2)
     ];
     mainBusCurve = new THREE.CatmullRomCurve3(points);
     for (let i = 0; i < 12; i += 1) {
@@ -784,7 +784,7 @@
 
   function buildScene() {
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(38, 20),
+      new THREE.PlaneGeometry(50, 22),
       new THREE.MeshStandardMaterial({ color: 0x0a1119, roughness: 0.92, metalness: 0.1 })
     );
     floor.rotation.x = -Math.PI / 2;
@@ -792,12 +792,12 @@
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const grid = new THREE.GridHelper(38, 38, 0x2b3d50, 0x182330);
+    const grid = new THREE.GridHelper(50, 50, 0x2b3d50, 0x182330);
     grid.position.y = 0.02;
     scene.add(grid);
 
     const platform = new THREE.Mesh(
-      new THREE.BoxGeometry(30, 0.28, 12),
+      new THREE.BoxGeometry(40, 0.28, 14),
       new THREE.MeshStandardMaterial({ color: 0x141f2b, roughness: 0.62, metalness: 0.35 })
     );
     platform.position.set(0, 0.14, -0.1);
@@ -886,10 +886,10 @@
     scene.add(pylonCable.mesh);
 
     const busBody = new THREE.Mesh(
-      new THREE.BoxGeometry(21.2, 0.55, 0.8),
+      new THREE.BoxGeometry(28, 0.55, 0.8),
       new THREE.MeshStandardMaterial({ color: 0x223445, metalness: 0.5, roughness: 0.5 })
     );
-    busBody.position.set(-0.8, 8.1, -2.2);
+    busBody.position.set(1.6, 8.1, -2.2);
     busBody.castShadow = true;
     busBody.receiveShadow = true;
     scene.add(busBody);
@@ -901,8 +901,8 @@
       transparent: true,
       opacity: 0.85
     });
-    const busGlow = new THREE.Mesh(new THREE.BoxGeometry(20.4, 0.16, 0.42), mainBusMat);
-    busGlow.position.set(-0.8, 8.17, -2.2);
+    const busGlow = new THREE.Mesh(new THREE.BoxGeometry(27, 0.16, 0.42), mainBusMat);
+    busGlow.position.set(1.6, 8.17, -2.2);
     scene.add(busGlow);
 
     const postMat = new THREE.MeshStandardMaterial({
@@ -910,7 +910,7 @@
       metalness: 0.6,
       roughness: 0.45
     });
-    for (let x = -9.8; x <= 9.2; x += 1.9) {
+    for (let x = -11; x <= 14.2; x += 2.8) {
       const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 7.9, 0.14), postMat);
       post.position.set(x, 4.0, -2.2);
       scene.add(post);
@@ -921,7 +921,7 @@
       emissive: COLORS.ok,
       emissiveIntensity: 0.7
     });
-    for (let x = -8.4; x <= 8.4; x += 2.8) {
+    for (let x = -11; x <= 14.2; x += 2.8) {
       const chevron = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.55, 10), chevronMat);
       chevron.position.set(x, 8.27, -2.2);
       chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
@@ -930,7 +930,7 @@
     }
 
     const busLabel = makeLabel('ATS 双路切换母线', 3.2);
-    busLabel.position.set(-0.8, 8.75, -2.2);
+    busLabel.position.set(1.6, 8.75, -2.2);
     scene.add(busLabel);
 
     createCabinet({
@@ -983,23 +983,23 @@
     });
 
     [-4.4, -0.2, 2.0, 4.2].forEach(z => {
-      addCableTray(z, -10.2, 9.5);
+      addCableTray(z, -12.2, 13.5);
     });
 
     ROUTES.forEach((route, index) => {
       const tx = transformerX(index);
       const upsX = tx + 0.55;
       const outX = tx - 0.55;
-      addCableDrop(tx, 8.38, -4.4, tx, 2.08, -4.4, 0x3b5a75);
-      addCableDrop(upsX, 8.38, -0.2, upsX, 2.2, -0.2, 0x3b5a75);
-      addCableDrop(outX, 8.38, 2.0, outX, 2.2, 2.0, 0x3b5a75);
-      addCableDrop(tx, 8.38, 4.2, tx, 1.08, 4.2, 0x3b5a75);
-      addTopJunctionBox(upsX, 2.34, -0.2, COLORS.info);
-      addTopJunctionBox(outX, 2.34, 2.0, COLORS.ok);
+      addCableDrop(tx, 8.38, -4.4, tx, 2.4, -4.4, 0x3b5a75);
+      addCableDrop(upsX, 8.38, -0.2, upsX, 2.55, -0.2, 0x3b5a75);
+      addCableDrop(outX, 8.38, 2.0, outX, 2.55, 2.0, 0x3b5a75);
+      addCableDrop(tx, 8.38, 4.2, tx, 1.95, 4.2, 0x3b5a75);
+      addTopJunctionBox(upsX, 2.6, -0.2, COLORS.info);
+      addTopJunctionBox(outX, 2.6, 2.0, COLORS.ok);
     });
 
     [9.7, 11.2, 12.7].forEach(x => {
-      addCableDrop(x, 8.38, 2.0, x, 2.26, 2.0, 0x3b5a75);
+      addCableDrop(x, 8.38, 2.0, x, 2.45, 2.0, 0x3b5a75);
     });
 
     const caption = makeLabel('1#-10# 变压器阵列', 3.2);
@@ -1068,14 +1068,14 @@
     container.appendChild(renderer.domElement);
 
     camera = new THREE.PerspectiveCamera(44, 1, 0.1, 120);
-    camera.position.set(0, 12.5, 21.5);
+    camera.position.set(0, 16, 28);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(-0.5, 2.1, -0.3);
+    controls.target.set(0, 2.5, -0.3);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.minDistance = 9;
-    controls.maxDistance = 58;
+    controls.maxDistance = 80;
     controls.maxPolarAngle = 1.42;
 
     const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);

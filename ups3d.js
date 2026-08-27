@@ -43,16 +43,15 @@
   const fans = [];
   const hmiScreens = [];
   let lastHmiTick = -1;
-  const FLEET_COLS = 8;
-  const FLEET_ROWS = 6;
+  const FLEET_COLS = 7;
+  const FLEET_ROWS = 7;
 
   function devicePosition(index) {
     const col = index % FLEET_COLS;
     const row = Math.floor(index / FLEET_COLS);
-    const stagger = row % 2 === 1 ? 1.025 : 0;
     return {
-      x: -7.2 + col * 2.05 + stagger,
-      z: -3.8 + row * 1.6
+      x: -9 + col * 3.0,
+      z: -7.2 + row * 2.4
     };
   }
 
@@ -196,7 +195,7 @@
   function createCabinet(options) {
     const group = new THREE.Group();
     const w = options.w || 1.7;
-    const h = options.h || 2.1;
+    const h = options.h || 2.5;
     const d = options.d || 1.05;
 
     const bodyMat = new THREE.MeshStandardMaterial({
@@ -360,7 +359,7 @@
 
   function buildScene() {
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(28, 14),
+      new THREE.PlaneGeometry(32, 22),
       new THREE.MeshStandardMaterial({ color: 0x0a1119, roughness: 0.92, metalness: 0.1 })
     );
     floor.rotation.x = -Math.PI / 2;
@@ -368,12 +367,12 @@
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const grid = new THREE.GridHelper(28, 28, 0x2b3d50, 0x182330);
+    const grid = new THREE.GridHelper(32, 32, 0x2b3d50, 0x182330);
     grid.position.y = 0.02;
     scene.add(grid);
 
     const platform = new THREE.Mesh(
-      new THREE.BoxGeometry(19.5, 0.28, 11.4),
+      new THREE.BoxGeometry(22, 0.28, 17.5),
       new THREE.MeshStandardMaterial({ color: 0x141f2b, roughness: 0.62, metalness: 0.35 })
     );
     platform.position.set(0, 0.14, 0);
@@ -381,7 +380,7 @@
     scene.add(platform);
 
     const aisle = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.3, 8.6),
+      new THREE.PlaneGeometry(1.4, 13.5),
       new THREE.MeshStandardMaterial({
         color: 0x0c1a26,
         emissive: 0x0c1a26,
@@ -416,10 +415,10 @@
       metalness: 0.6,
       roughness: 0.45
     });
-    const chevronXs = [-8, -6, -4, -2, 0, 2, 4, 6, 8];
+    const chevronXs = [-9, -6, -3, 0, 3, 6, 9];
 
     for (let row = 0; row < FLEET_ROWS; row += 1) {
-      const rowZ = -3.8 + row * 1.6;
+      const rowZ = -7.2 + row * 2.4;
       const inputBus = createPath([
         new THREE.Vector3(-8.6, busY, rowZ - 0.45),
         new THREE.Vector3(8.6, busY, rowZ - 0.45)
@@ -453,7 +452,7 @@
         chevrons.push(chevronOut);
       });
 
-      const tray = new THREE.Mesh(new THREE.BoxGeometry(18, 0.14, 1.5), trayMat);
+      const tray = new THREE.Mesh(new THREE.BoxGeometry(21, 0.14, 1.5), trayMat);
       tray.position.set(0, 8.4, rowZ);
       tray.castShadow = true;
       scene.add(tray);
@@ -466,16 +465,16 @@
 
     DEVICES.forEach((device, index) => {
       const pos = devicePosition(index);
-      const rowZ = -3.8 + Math.floor(index / FLEET_COLS) * 1.6;
+      const rowZ = -7.2 + Math.floor(index / FLEET_COLS) * 2.4;
       const inputFeeder = createPath([
         new THREE.Vector3(pos.x - 0.42, busY, rowZ - 0.45),
-        new THREE.Vector3(pos.x - 0.42, 2.35, rowZ - 0.45)
+        new THREE.Vector3(pos.x - 0.42, 2.55, rowZ - 0.45)
       ], 0.09, COLORS.info);
       scene.add(inputFeeder.mesh);
       addFlowArrows(inputFeeder.curve, 2, COLORS.info);
 
       const outputFeeder = createPath([
-        new THREE.Vector3(pos.x + 0.42, 2.35, rowZ + 0.45),
+        new THREE.Vector3(pos.x + 0.42, 2.55, rowZ + 0.45),
         new THREE.Vector3(pos.x + 0.42, busY, rowZ + 0.45)
       ], 0.09, COLORS.ok);
       scene.add(outputFeeder.mesh);
@@ -483,14 +482,14 @@
     });
 
     const inLabel = makeLabel('进电输入', 2.2);
-    inLabel.position.set(-12.2, 8.8, -4.25);
+    inLabel.position.set(-13.8, 9.4, -7.65);
     scene.add(inLabel);
     const outLabel = makeLabel('输出负载', 2.2);
-    outLabel.position.set(-12.2, 8.8, 4.65);
+    outLabel.position.set(-13.8, 9.4, 7.65);
     scene.add(outLabel);
 
     const caption = makeLabel('全站 UPS 实物阵列 · 46 台', 5);
-    caption.position.set(0, 5.6, 0);
+    caption.position.set(0, 6.4, 0);
     scene.add(caption);
 
     selectionRing = new THREE.Mesh(
@@ -711,7 +710,7 @@
 
   function init() {
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x0a1119, 38, 72);
+    scene.fog = new THREE.Fog(0x0a1119, 46, 88);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -723,14 +722,14 @@
     container.appendChild(renderer.domElement);
 
     camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
-    camera.position.set(0, 14.5, 22);
+    camera.position.set(0, 20, 30);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 2.2, 0);
+    controls.target.set(0, 2.5, 0);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.minDistance = 10;
-    controls.maxDistance = 56;
+    controls.minDistance = 14;
+    controls.maxDistance = 90;
     controls.maxPolarAngle = 1.4;
 
     const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);

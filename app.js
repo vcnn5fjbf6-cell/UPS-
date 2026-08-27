@@ -651,7 +651,12 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         if (data.ok && data.data) {
           const payload = data.data;
           applyZhihangRealtimeValues(payload);
-          if (resultEl) resultEl.textContent = '同步成功：当前运行数据来自智航 CMDB';
+          if (data.source === 'local-standard') {
+            state.dataSource = '智航本地标准数据';
+            if (resultEl) resultEl.textContent = '同步成功：当前使用智航本地标准数据';
+          } else {
+            if (resultEl) resultEl.textContent = '同步成功：当前运行数据来自智航 CMDB';
+          }
         } else {
           state.dataSource = '智航模拟数据';
           if (resultEl) resultEl.textContent = `同步失败：${data.error || '无数据'}，当前使用模拟数据`;
@@ -729,12 +734,16 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         const data = await response.json();
         if (data.ok && data.data) {
           applyZhihangRealtimeValues(data.data);
+          if (data.source === 'local-standard') {
+            state.dataSource = '智航本地标准数据';
+          }
           updateDataSourceBadges();
           updateMetrics(true);
           updateTopology();
           runAiInspection(false);
           const entries = Object.entries(data.data).map(([id, value]) => `${id} = ${value && value.reported_value !== undefined ? value.reported_value : '--'}`);
-          zhihangSidebarResult(`实时数据同步成功\n\n${entries.join('\n')}`);
+          const sourceLabel = data.source === 'local-standard' ? '智航本地标准数据' : '智航实时数据';
+          zhihangSidebarResult(`${sourceLabel}同步成功\n\n${entries.join('\n')}`);
         } else {
           state.dataSource = '智航模拟数据';
           updateDataSourceBadges();

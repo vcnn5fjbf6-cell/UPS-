@@ -1658,6 +1658,19 @@
       line-height: 1.45;
     }
 
+    .device-std-model {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(99, 179, 255, 0.24);
+      background: rgba(99, 179, 255, 0.08);
+      color: #a8c9ee;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
     .device-visual {
       display: grid;
       grid-template-columns: 1fr;

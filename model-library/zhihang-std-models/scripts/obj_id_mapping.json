@@ -1,0 +1,434 @@
+{
+  "2.8.1.1": {
+    "objId": "OBJ-321",
+    "objName": "冷通道"
+  },
+  "2.1.1.1": {
+    "objId": "OBJ-2",
+    "objName": "区域"
+  },
+  "2.5.1.2": {
+    "objId": "OBJ-17",
+    "objName": "IT房间"
+  },
+  "2.5.1.1": {
+    "objId": "OBJ-16",
+    "objName": "设施房间"
+  },
+  "2.2.1.1": {
+    "objId": "OBJ-3",
+    "objName": "数据中心"
+  },
+  "2.6.1.1": {
+    "objId": "OBJ-8",
+    "objName": "机列"
+  },
+  "2.7.1.1": {
+    "objId": "OBJ-9",
+    "objName": "机柜"
+  },
+  "2.4.1.1": {
+    "objId": "OBJ-5",
+    "objName": "楼层"
+  },
+  "2.3.1.1": {
+    "objId": "OBJ-4",
+    "objName": "楼栋"
+  },
+  "2.9.1.1": {
+    "objId": "OBJ-340",
+    "objName": "热通道"
+  },
+  "1.1.1.1": {
+    "objId": "OBJ-341",
+    "objName": "高压配电柜"
+  },
+  "1.1.2.1": {
+    "objId": "OBJ-342",
+    "objName": "变压器"
+  },
+  "1.1.3.1": {
+    "objId": "OBJ-343",
+    "objName": "低压配电柜"
+  },
+  "1.1.3.2": {
+    "objId": "OBJ-345",
+    "objName": "ATMT"
+  },
+  "1.1.3.3": {
+    "objId": "OBJ-346",
+    "objName": "三相ATS_STS"
+  },
+  "1.1.3.4": {
+    "objId": "OBJ-347",
+    "objName": "单相ATS"
+  },
+  "1.1.3.5": {
+    "objId": "OBJ-348",
+    "objName": "变频器"
+  },
+  "1.1.3.6": {
+    "objId": "OBJ-349",
+    "objName": "开关模块"
+  },
+  "1.1.3.7": {
+    "objId": "OBJ-350",
+    "objName": "电流模块"
+  },
+  "1.1.4.1": {
+    "objId": "OBJ-351",
+    "objName": "低压柴油发电机"
+  },
+  "1.1.4.2": {
+    "objId": "OBJ-352",
+    "objName": "高压柴油发电机"
+  },
+  "1.1.4.3": {
+    "objId": "OBJ-353",
+    "objName": "供油控制柜"
+  },
+  "1.1.4.6": {
+    "objId": "OBJ-354",
+    "objName": "柴发并机控制柜"
+  },
+  "1.1.5.1": {
+    "objId": "OBJ-355",
+    "objName": "单相UPS"
+  },
+  "1.1.5.2": {
+    "objId": "OBJ-356",
+    "objName": "三相UPS"
+  },
+  "1.1.5.3": {
+    "objId": "OBJ-357",
+    "objName": "HVDC"
+  },
+  "1.1.5.4": {
+    "objId": "OBJ-358",
+    "objName": "EPS"
+  },
+  "1.1.5.5": {
+    "objId": "OBJ-359",
+    "objName": "直流屏"
+  },
+  "1.1.6.1": {
+    "objId": "OBJ-360",
+    "objName": "铅酸阀控蓄电池"
+  },
+  "1.1.7.1": {
+    "objId": "OBJ-361",
+    "objName": "交流列头柜"
+  },
+  "1.1.7.2": {
+    "objId": "OBJ-362",
+    "objName": "直流列头柜"
+  },
+  "1.1.7.3": {
+    "objId": "OBJ-363",
+    "objName": "始端箱"
+  },
+  "1.1.7.4": {
+    "objId": "OBJ-364",
+    "objName": "交流支路空开"
+  },
+  "1.1.7.5": {
+    "objId": "OBJ-365",
+    "objName": "直流支路空开"
+  },
+  "1.1.8.1": {
+    "objId": "OBJ-366",
+    "objName": "交流PDU"
+  },
+  "1.1.8.2": {
+    "objId": "OBJ-367",
+    "objName": "直流PDU"
+  },
+  "1.2.1.1": {
+    "objId": "OBJ-368",
+    "objName": "水冷型精密空调"
+  },
+  "1.2.1.2": {
+    "objId": "OBJ-369",
+    "objName": "风冷型精密空调"
+  },
+  "1.2.1.3": {
+    "objId": "OBJ-370",
+    "objName": "水冷型AHU"
+  },
+  "1.2.1.4": {
+    "objId": "OBJ-371",
+    "objName": "风冷型AHU"
+  },
+  "1.2.1.5": {
+    "objId": "OBJ-372",
+    "objName": "新风机"
+  },
+  "1.2.1.6": {
+    "objId": "OBJ-373",
+    "objName": "除湿机"
+  },
+  "1.2.1.7": {
+    "objId": "OBJ-374",
+    "objName": "湿膜加湿器"
+  },
+  "1.2.1.8": {
+    "objId": "OBJ-375",
+    "objName": "恒湿机"
+  },
+  "1.2.1.9": {
+    "objId": "OBJ-376",
+    "objName": "送风地板"
+  },
+  "1.2.2.1": {
+    "objId": "OBJ-377",
+    "objName": "水冷冷水机组"
+  },
+  "1.2.2.2": {
+    "objId": "OBJ-378",
+    "objName": "风冷冷水机组"
+  },
+  "1.2.2.3": {
+    "objId": "OBJ-379",
+    "objName": "开式冷却塔"
+  },
+  "1.2.2.4": {
+    "objId": "OBJ-380",
+    "objName": "闭式冷却塔"
+  },
+  "1.2.2.5": {
+    "objId": "OBJ-381",
+    "objName": "电加热"
+  },
+  "1.2.2.6": {
+    "objId": "OBJ-382",
+    "objName": "开式蓄冷罐"
+  },
+  "1.2.2.7": {
+    "objId": "OBJ-383",
+    "objName": "闭式蓄冷罐"
+  },
+  "1.2.2.8": {
+    "objId": "OBJ-384",
+    "objName": "加药装置"
+  },
+  "1.2.2.9": {
+    "objId": "OBJ-385",
+    "objName": "定压装置"
+  },
+  "1.2.2.10": {
+    "objId": "OBJ-386",
+    "objName": "水池（箱）"
+  },
+  "1.2.2.11": {
+    "objId": "OBJ-387",
+    "objName": "板式换热器"
+  },
+  "1.2.2.12": {
+    "objId": "OBJ-388",
+    "objName": "补水系统"
+  },
+  "1.2.2.13": {
+    "objId": "OBJ-389",
+    "objName": "冷冻泵"
+  },
+  "1.2.2.14": {
+    "objId": "OBJ-390",
+    "objName": "冷却泵"
+  },
+  "1.2.2.15": {
+    "objId": "OBJ-391",
+    "objName": "其他水泵"
+  },
+  "1.2.3.1": {
+    "objId": "OBJ-393",
+    "objName": "开关阀门"
+  },
+  "1.2.3.2": {
+    "objId": "OBJ-394",
+    "objName": "调节阀门"
+  },
+  "1.2.3.3": {
+    "objId": "OBJ-395",
+    "objName": "冷冻总管"
+  },
+  "1.2.3.4": {
+    "objId": "OBJ-396",
+    "objName": "冷却总管"
+  },
+  "1.2.3.5": {
+    "objId": "OBJ-397",
+    "objName": "电伴热"
+  },
+  "1.2.3.6": {
+    "objId": "OBJ-398",
+    "objName": "机组支管"
+  },
+  "1.2.3.7": {
+    "objId": "OBJ-399",
+    "objName": "末端管路及室外"
+  },
+  "1.3.1.1": {
+    "objId": "OBJ-400",
+    "objName": "温湿度传感器"
+  },
+  "1.3.1.2": {
+    "objId": "OBJ-401",
+    "objName": "温度传感器"
+  },
+  "1.3.1.3": {
+    "objId": "OBJ-402",
+    "objName": "定位漏液检测器"
+  },
+  "1.3.1.4": {
+    "objId": "OBJ-403",
+    "objName": "区域漏液检测器"
+  },
+  "1.3.1.5": {
+    "objId": "OBJ-404",
+    "objName": "气体浓度检测器"
+  },
+  "1.3.1.6": {
+    "objId": "OBJ-405",
+    "objName": "压力传感器"
+  },
+  "1.3.1.7": {
+    "objId": "OBJ-406",
+    "objName": "流量传感器"
+  },
+  "1.3.1.8": {
+    "objId": "OBJ-407",
+    "objName": "液位传感器"
+  },
+  "1.4.1.1": {
+    "objId": "OBJ-408",
+    "objName": "消防主机"
+  },
+  "1.4.1.9": {
+    "objId": "OBJ-416",
+    "objName": "消防设备"
+  },
+  "1.4.1.10": {
+    "objId": "OBJ-417",
+    "objName": "空气采样"
+  },
+  "1.2.3.8": {
+    "objId": "OBJ-418",
+    "objName": "分水器"
+  },
+  "1.2.3.9": {
+    "objId": "OBJ-419",
+    "objName": "集水器"
+  },
+  "1.10.1.1": {
+    "objId": "OBJ-421",
+    "objName": "通用设备"
+  },
+  "1.3.3.1": {
+    "objId": "OBJ-424",
+    "objName": "动环监控系统"
+  },
+  "3.1.3.5": {
+    "objId": "OBJ-425",
+    "objName": "PDU组"
+  },
+  "3.1.3.3": {
+    "objId": "OBJ-426",
+    "objName": "UPS组"
+  },
+  "3.1.3.4": {
+    "objId": "OBJ-428",
+    "objName": "UPS输出开关组"
+  },
+  "1.1.6.2": {
+    "objId": "OBJ-430",
+    "objName": "锂电池组"
+  },
+  "3.1.1.2": {
+    "objId": "OBJ-432",
+    "objName": "高压配电柜组"
+  },
+  "1.3.2.5": {
+    "objId": "OBJ-435",
+    "objName": "串口服务器"
+  },
+  "1.2.1.12": {
+    "objId": "OBJ-437",
+    "objName": "热回收机组"
+  },
+  "1.8.8.8": {
+    "objId": "OBJ-438",
+    "objName": "电池测试模型"
+  },
+  "1.3.2.1": {
+    "objId": "OBJ-439",
+    "objName": "服务器"
+  },
+  "1.3.2.3": {
+    "objId": "OBJ-440",
+    "objName": "采集器"
+  },
+  "1.3.3.2": {
+    "objId": "OBJ-441",
+    "objName": "虚拟串口"
+  },
+  "1.1.5.6": {
+    "objId": "OBJ-442",
+    "objName": "巴拿马电源"
+  },
+  "1.2.2.17": {
+    "objId": "OBJ-443",
+    "objName": "CDU"
+  },
+  "1.2.2.18": {
+    "objId": "OBJ-445",
+    "objName": "远传水表"
+  },
+  "1.3.3.3": {
+    "objId": "OBJ-447",
+    "objName": "BA监控系统"
+  },
+  "1.1.1.2": {
+    "objId": "OBJ-448",
+    "objName": "中压备自投PLC"
+  },
+  "1.1.3.8": {
+    "objId": "OBJ-449",
+    "objName": "低压备自投PLC"
+  },
+  "1.2.2.19": {
+    "objId": "OBJ-450",
+    "objName": "氟泵外机"
+  },
+  "1.2.1.10": {
+    "objId": "OBJ-453",
+    "objName": "风冷氟泵空调"
+  },
+  "1.2.1.11": {
+    "objId": "OBJ-454",
+    "objName": "水冷氟泵相变多联内机"
+  },
+  "1.1.5.7": {
+    "objId": "OBJ-462",
+    "objName": "48V直流柜"
+  },
+  "3.1.2.2": {
+    "objId": "OBJ-463",
+    "objName": "电力模组"
+  },
+  "1.1.88.1": {
+    "objId": "OBJ-466",
+    "objName": "测试用交流PDU"
+  },
+  "1.1.3.9": {
+    "objId": "OBJ-467",
+    "objName": "低压无功补偿装置"
+  },
+  "1.3.2.6": {
+    "objId": "OBJ-468",
+    "objName": "液冷机柜设备"
+  },
+  "1.2.2.20": {
+    "objId": "OBJ-469",
+    "objName": "干冷器"
+  }
+}

@@ -57,6 +57,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       deviceHealth: document.getElementById('deviceHealth'),
       deviceName: document.getElementById('deviceName'),
       deviceState: document.getElementById('deviceState'),
+      deviceStdModel: document.getElementById('deviceStdModel'),
       lampRun: document.getElementById('lampRun'),
       lampCharge: document.getElementById('lampCharge'),
       lampFault: document.getElementById('lampFault'),
@@ -479,6 +480,15 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       '10': { input: '10AA7', output: '10AA8', load: '楼控DDC / 大屏 / 环控' }
     };
 
+    const ZHIHANG_MODELS = {
+      ups: { name: '三相UPS', refId: '1.1.5.2', objId: 'OBJ-356', className: '不间断电源', subject: '电气' },
+      transformer: { name: '变压器', refId: '1.1.2.1', objId: 'OBJ-342', className: '电力变压器', subject: '电气' },
+      ats: { name: '三相ATS_STS', refId: '1.1.3.3', objId: 'OBJ-346', className: '切换装置', subject: '电气' },
+      battery: { name: '铅酸阀控蓄电池', refId: '1.1.6.1', objId: 'OBJ-360', className: '蓄电池', subject: '电气' },
+      switchboard: { name: '低压配电柜', refId: '1.1.3.1', objId: 'OBJ-343', className: '低压配电', subject: '电气' }
+    };
+    window.zhihangStdModels = ZHIHANG_MODELS;
+
     const upsDevices = [];
     Object.entries(UPS_COUNTS).forEach(([routeId, count]) => {
       const meta = UPS_ROUTE_META[routeId];
@@ -492,7 +502,8 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
           transformer: `${routeId}#变`,
           input: meta.input,
           output: meta.output,
-          load: meta.load
+          load: meta.load,
+          stdModel: ZHIHANG_MODELS.ups
         });
       }
     });
@@ -728,6 +739,9 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
 
       if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
       if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health}`;
+      if (els.deviceStdModel && device.stdModel) {
+        els.deviceStdModel.textContent = `智航模型：${device.stdModel.name} · ${device.stdModel.refId} · ${device.stdModel.objId}`;
+      }
       if (els.deviceState) {
         els.deviceState.textContent = `${liveStatus}，${batteryStatus}，输入 ${device.input}，输出 ${device.output}，负载：${device.load}`;
       }
@@ -741,6 +755,9 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       const health = state.fault ? '逆变异常' : state.lowBattery ? '需关注' : '运行正常';
       if (els.deviceName) els.deviceName.textContent = `华为 ${device.name}（${device.model || 'UPS5000E'}）`;
       if (els.deviceHealth) els.deviceHealth.textContent = `${device.transformer} / ${health}`;
+      if (els.deviceStdModel && device.stdModel) {
+        els.deviceStdModel.textContent = `智航模型：${device.stdModel.name} · ${device.stdModel.refId} · ${device.stdModel.objId}`;
+      }
       if (els.deviceState) {
         els.deviceState.textContent = `${liveStatus}，${batteryStatus}，输入 ${device.input}，输出 ${device.output}，负载：${device.load}`;
       }

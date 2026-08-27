@@ -38,10 +38,14 @@
   const busChevrons = [];
   const cabinets = [];
   const routePaths = [];
+  const fans = [];
+  const hmiScreens = [];
+  let lastHmiTick = -1;
   let selectionRing;
   let selectionBeam;
   let selectionMarker;
   let hoveredId = null;
+  let lastState = { mainsOn: true, fault: false, lowBattery: false, battery: 96, load: 32 };
 
   function transformerX(index) {
     return -9 + index * 1.95;
@@ -86,6 +90,69 @@
     const width = scale || Math.max(2.2, text.length * 0.36);
     sprite.scale.set(width, width * 0.25, 1);
     return sprite;
+  }
+
+  function createCoolingFan(group, x, y, z, radius, speed) {
+    const fan = new THREE.Group();
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: 0x243747,
+      metalness: 0.65,
+      roughness: 0.4
+    });
+    const bladeMat = new THREE.MeshStandardMaterial({
+      color: 0x101a24,
+      metalness: 0.7,
+      roughness: 0.3
+    });
+    const hubMat = new THREE.MeshStandardMaterial({
+      color: 0x31465a,
+      metalness: 0.6,
+      roughness: 0.45
+    });
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.05, 20), ringMat);
+    ring.position.y = 0.015;
+    fan.add(ring);
+    for (let i = 0; i < 4; i += 1) {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(radius * 1.35, 0.04, radius * 0.24), bladeMat);
+      blade.rotation.y = i * Math.PI / 2;
+      blade.position.x = radius * 0.42;
+      fan.add(blade);
+    }
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.2, radius * 0.2, 0.1, 12), hubMat);
+    hub.position.y = 0.035;
+    fan.add(hub);
+    fan.position.set(x, y, z);
+    fan.userData.speed = speed;
+    group.add(fan);
+    fans.push(fan);
+    return fan;
+  }
+
+  function createHmiScreen(group, options) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    const mat = new THREE.MeshStandardMaterial({
+      map: texture,
+      emissive: 0x0b2431,
+      emissiveIntensity: 0.7,
+      roughness: 0.35,
+      metalness: 0.2
+    });
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(options.w * 0.5, 0.2), mat);
+    screen.position.set(0, options.h * 0.24, options.d / 2 + 0.09);
+    group.add(screen);
+    hmiScreens.push({
+      canvas,
+      ctx,
+      texture,
+      mat,
+      label: options.label || 'UPS'
+    });
+    return screen;
   }
 
   function createCabinet(options) {
@@ -149,14 +216,13 @@
       group.add(vent);
     }
 
-    const screenMat = new THREE.MeshStandardMaterial({
-      color: 0x0a1117,
-      emissive: COLORS.info,
-      emissiveIntensity: 0.8
+    const screen = createHmiScreen(group, {
+      w,
+      h,
+      d,
+      label: options.label || 'UPS'
     });
-    const screen = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, 0.2, 0.05), screenMat);
-    screen.position.set(0, h * 0.24, d / 2 + 0.09);
-    group.add(screen);
+    const screenMat = screen.material;
 
     const ledMat = new THREE.MeshStandardMaterial({
       color: COLORS.ok,
@@ -223,6 +289,11 @@
     group.traverse(object => {
       if (object.isMesh) object.userData.cabinet = group;
     });
+
+    if (options.kind === 'ups' || options.kind === 'output') {
+      createCoolingFan(group, 0, h / 2 + 0.18, -d * 0.32, 0.22, 2.2);
+      createCoolingFan(group, 0, h / 2 + 0.18, d * 0.32, 0.22, 2.2);
+    }
 
     cabinets.push(group);
     scene.add(group);
@@ -1019,6 +1090,7 @@
   }
 
   function update(state) {
+    lastState = state;
     const flow = state.fault ? 'bad' : state.mainsOn ? 'ok' : 'warn';
     const color = COLORS[flow];
 
@@ -1133,6 +1205,44 @@
     };
   }
 
+  function drawHmiScreens() {
+    const state = lastState;
+    const statusText = state.fault ? 'FAULT' : state.mainsOn ? 'ONLINE' : 'BATTERY';
+    const statusColor = state.fault ? '#ff6363' : state.mainsOn ? '#49d17d' : '#f2b84c';
+    hmiScreens.forEach(item => {
+      const ctx = item.ctx;
+      ctx.clearRect(0, 0, 256, 96);
+      ctx.fillStyle = '#071019';
+      ctx.fillRect(0, 0, 256, 96);
+      ctx.strokeStyle = 'rgba(99, 179, 255, 0.45)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(3, 3, 250, 90);
+      ctx.fillStyle = '#e8eef7';
+      ctx.font = '700 23px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.label.slice(0, 14), 14, 30);
+      ctx.fillStyle = statusColor;
+      ctx.font = '700 17px Consolas, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(statusText, 244, 30);
+      ctx.fillStyle = '#8fa2b8';
+      ctx.font = '15px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`BAT ${Math.round(state.battery)}%`, 14, 58);
+      ctx.fillText(`LOAD ${Math.round(state.load || 32)}%`, 14, 80);
+      ctx.fillStyle = '#14212d';
+      ctx.fillRect(150, 47, 92, 9);
+      ctx.fillStyle = statusColor;
+      ctx.fillRect(150, 47, Math.max(8, 92 * Math.min(1, state.battery / 100)), 9);
+      ctx.fillStyle = '#14212d';
+      ctx.fillRect(150, 68, 92, 9);
+      ctx.fillStyle = '#63b3ff';
+      ctx.fillRect(150, 68, Math.max(8, 92 * Math.min(1, (state.load || 32) / 100)), 9);
+      item.texture.needsUpdate = true;
+    });
+  }
+
   function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
@@ -1151,6 +1261,20 @@
     mainBusParticles.forEach(particle => {
       moveArrow(particle, time);
     });
+    fans.forEach(fan => {
+      fan.rotation.y += fan.userData.speed * 0.016;
+    });
+    cabinets.forEach(cabinet => {
+      if (cabinet.userData.ledMat) {
+        const base = lastState.fault ? 1.35 : 0.95;
+        cabinet.userData.ledMat.emissiveIntensity = base + Math.sin(time * 3.2 + (cabinet.userData.label || '').length) * 0.22;
+      }
+    });
+    const tick = Math.floor(time * 4);
+    if (tick !== lastHmiTick) {
+      lastHmiTick = tick;
+      drawHmiScreens();
+    }
     if (selectionRing && selectionRing.visible) {
       const pulse = 1 + Math.sin(time * 2.4) * 0.07;
       selectionRing.scale.set(pulse, pulse, 1);

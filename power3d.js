@@ -480,6 +480,76 @@
     return group;
   }
 
+  function createBatteryRoom() {
+    const cx = 16.9;
+    const cz = 4.4;
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0x1c2a38,
+      metalness: 0.6,
+      roughness: 0.5
+    });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x0d2231,
+      transparent: true,
+      opacity: 0.3,
+      metalness: 0.45,
+      roughness: 0.25,
+      emissive: COLORS.info,
+      emissiveIntensity: 0.12
+    });
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x2a3c4c,
+      metalness: 0.55,
+      roughness: 0.45
+    });
+
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.12, 4.8), wallMat);
+    floor.position.set(cx, 0.06, cz);
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const back = new THREE.Mesh(new THREE.BoxGeometry(5.8, 3.0, 0.12), wallMat);
+    back.position.set(cx, 1.5, cz + 2.3);
+    back.castShadow = true;
+    scene.add(back);
+
+    [-2.9, 2.9].forEach(offset => {
+      const side = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.0, 4.8), wallMat);
+      side.position.set(cx + offset, 1.5, cz);
+      side.castShadow = true;
+      scene.add(side);
+    });
+
+    const front = new THREE.Mesh(new THREE.BoxGeometry(5.8, 3.0, 0.12), glassMat);
+    front.position.set(cx, 1.5, cz - 2.3);
+    front.castShadow = true;
+    scene.add(front);
+
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(6.0, 0.12, 5.0), wallMat);
+    roof.position.set(cx, 3.1, cz);
+    roof.castShadow = true;
+    scene.add(roof);
+
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.2, 0.1), frameMat);
+    frame.position.set(cx, 1.5, cz - 2.24);
+    scene.add(frame);
+
+    const label = makeLabel('电池间', 2.8);
+    label.position.set(cx, 3.75, cz - 2.3);
+    scene.add(label);
+
+    const sign = makeLabel('蓄电池组 · 闲人免进', 2.2);
+    sign.position.set(cx, 0.8, cz - 2.24);
+    scene.add(sign);
+
+    const warning = new THREE.Mesh(
+      new THREE.BoxGeometry(4.2, 0.04, 0.22),
+      new THREE.MeshStandardMaterial({ color: COLORS.warn, emissive: COLORS.warn, emissiveIntensity: 0.9 })
+    );
+    warning.position.set(cx, 0.16, cz - 2.05);
+    scene.add(warning);
+  }
+
   function createLoadBlock(options) {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({
@@ -1008,6 +1078,7 @@
     const batteryCaption = makeLabel('电池组区', 3.0);
     batteryCaption.position.set(16.9, 3.4, 4.4);
     scene.add(batteryCaption);
+    createBatteryRoom();
 
     const caption = makeLabel('1#-10# 变压器阵列', 3.2);
     caption.position.set(-10.3, 3.5, -4.4);

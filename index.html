@@ -221,75 +221,6 @@
                 </div>
               </div>
             </div>
-            <div class="power-3d-stage" id="powerStage" aria-label="UPS、变压器、ATS、电池、旁路与负载的3D连接拓扑">
-              <div class="power-rail">
-              <div class="power-scene" id="powerScene">
-              <div class="power-halo"></div>
-              <div class="power-floor"></div>
-
-              <div class="power-stream active" id="streamMains" style="left: 6%; top: 44%; width: 16%; transform: rotate(-12deg);"></div>
-              <div class="power-stream active" id="streamTrans" style="left: 22%; top: 44%; width: 11%; transform: rotate(-12deg);"></div>
-              <div class="power-stream active" id="streamAts" style="left: 37%; top: 44%; width: 11%; transform: rotate(-12deg);"></div>
-              <div class="power-stream active" id="streamUps" style="left: 52%; top: 26%; width: 14%; transform: rotate(-8deg);"></div>
-              <div class="power-stream active" id="streamBus" style="left: 69%; top: 26%; width: 11%; transform: rotate(-8deg);"></div>
-              <div class="power-stream active" id="streamLoad" style="left: 84%; top: 26%; width: 10%; transform: rotate(-8deg);"></div>
-              <div class="power-stream vertical info" data-vertical="1" id="streamBattery" style="left: 50%; top: 52%; height: 14%;"></div>
-              <div class="power-stream vertical" data-vertical="1" id="streamBypass" style="left: 34%; top: 46%; height: 13%;"></div>
-
-              <div class="power-unit" id="unitMains" style="left: 3%; top: 20%; transform: rotateY(18deg) rotateX(4deg); width: 128px;">
-                <div class="unit-title">市电 1 / 市电 2</div>
-                <div class="unit-sub">双路高压输入<br>城市电网来电</div>
-                <div class="unit-foot"><span id="mainsUnitState">正常</span><span id="mainsUnitValue">220V</span></div>
-              </div>
-              <div class="power-unit" id="unitTrans" style="left: 18%; top: 12%; transform: rotateY(12deg) rotateX(4deg); width: 126px;">
-                <div class="unit-title">ATS</div>
-                <div class="unit-sub">双路切换柜<br>市电 / 油机选择</div>
-                <div class="unit-foot"><span id="transUnitState">在线</span><span id="transUnitValue">稳定</span></div>
-              </div>
-              <div class="power-unit" id="unitAts" style="left: 31%; top: 26%; transform: rotateY(10deg) rotateX(4deg); width: 140px;">
-                <div class="unit-title">油机</div>
-                <div class="unit-sub">应急备用电源<br>断电时自动接管</div>
-                <div class="unit-foot"><span id="atsUnitState">自动切换</span><span id="atsUnitValue">待命</span></div>
-              </div>
-              <div class="power-unit" id="unitUps" style="left: 48%; top: 10%; transform: rotateY(10deg) rotateX(4deg); width: 150px;">
-                <div class="unit-title">UPS 输入配电柜 1</div>
-                <div class="unit-sub">输入分配与切换<br>对应 UPS1 / UPS2</div>
-                <div class="unit-foot"><span id="upsUnitState">在线</span><span id="upsUnitValue">整流 / 逆变</span></div>
-              </div>
-              <div class="power-unit" id="unitBus" style="left: 64%; top: 10%; transform: rotateY(8deg) rotateX(4deg); width: 126px;">
-                <div class="unit-title">UPS1</div>
-                <div class="unit-sub">在线逆变主机<br>输出到配电柜 1</div>
-                <div class="unit-foot"><span id="busUnitState">供电中</span><span id="busUnitValue">384V</span></div>
-              </div>
-              <div class="power-unit" id="unitLoad" style="left: 81%; top: 10%; transform: rotateY(8deg) rotateX(4deg); width: 130px;">
-                <div class="unit-title">输出配电柜 1</div>
-                <div class="unit-sub">双电源负载 1 区<br>末端业务回路</div>
-                <div class="unit-foot"><span id="loadUnitState">正常</span><span id="loadUnitValue">32%</span></div>
-              </div>
-              <div class="power-unit" id="unitBattery" style="left: 46%; top: 32%; transform: rotateY(10deg) rotateX(4deg); width: 148px;">
-                <div class="unit-title">UPS 输入配电柜 2</div>
-                <div class="unit-sub">第二路输入分配<br>对应 UPS2 / UPS3</div>
-                <div class="unit-foot"><span id="batteryUnitState">待机充电</span><span id="batteryUnitValue">96%</span></div>
-              </div>
-              <div class="power-unit" id="unitBypass" style="left: 67%; top: 28%; transform: rotateY(8deg) rotateX(4deg); width: 134px;">
-                <div class="unit-title">UPS2</div>
-                <div class="unit-sub">中间逆变主机<br>支撑输出配电柜 2</div>
-                <div class="unit-foot"><span id="bypassUnitState">待命</span><span id="bypassUnitValue">正常</span></div>
-              </div>
-              <div class="power-unit info" id="unitMetrics" style="right: 4%; top: 24%; width: 158px; transform: rotateY(-8deg) rotateX(4deg);">
-                <div class="unit-title">输出配电柜 2 / 3</div>
-                <div class="unit-sub">双电源负载 2 区 / 3 区<br>末端汇流分配</div>
-                <div class="unit-foot"><span id="metricsUnitState">在线监测</span><span id="metricsUnitValue">1s 刷新</span></div>
-              </div>
-              </div>
-              </div>
-            </div>
-            <div class="topology-legend">
-              <span class="legend-item"><span class="legend-swatch green"></span>在线供电路径</span>
-              <span class="legend-item"><span class="legend-swatch amber"></span>电池 / 旁路运行</span>
-              <span class="legend-item"><span class="legend-swatch red"></span>故障告警路径</span>
-              <span class="legend-item"><span class="legend-swatch blue"></span>监控采集链路</span>
-            </div>
             <div class="route-panel">
               <div class="route-summary">
                 <div>
@@ -507,42 +438,6 @@
         <canvas id="trendChart" width="1200" height="320"></canvas>
           </article>
 
-          <article class="panel">
-        <div class="section-title">
-          <h2>告警策略</h2>
-          <span>阈值自动联动</span>
-        </div>
-        <div class="alarm-list">
-          <div class="alarm-item">
-            <div>
-              <strong>市电中断检测</strong>
-              <p>检测输入电压跌落为 0 时，自动切入电池供电并上报事件。</p>
-            </div>
-            <div class="alarm-tag warn">已启用</div>
-          </div>
-          <div class="alarm-item">
-            <div>
-              <strong>电池低压预警</strong>
-              <p>剩余容量低于 30% 时触发黄色预警，低于 15% 时升级为紧急告警。</p>
-            </div>
-            <div class="alarm-tag warn">监控中</div>
-          </div>
-          <div class="alarm-item">
-            <div>
-              <strong>逆变器故障</strong>
-              <p>出现逆变异常、旁路切换失败、输出异常电压时立即红色告警。</p>
-            </div>
-            <div class="alarm-tag bad">重点</div>
-          </div>
-          <div class="alarm-item">
-            <div>
-              <strong>温度保护</strong>
-              <p>机柜温度超过 45℃ 自动提示维护，超过 55℃ 建议强制停机检查。</p>
-            </div>
-            <div class="alarm-tag ok">正常</div>
-          </div>
-        </div>
-          </article>
         </section>
       </div>
     </section>

@@ -1094,53 +1094,17 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       const onBattery = !state.mainsOn && !state.fault;
       const faultPath = state.fault;
 
-      if (faultPath) {
-        els.topologyBadge.textContent = '故障旁路路径';
-      } else if (onBattery) {
-        els.topologyBadge.textContent = '电池供电路径';
-      } else if (state.lowBattery) {
-        els.topologyBadge.textContent = '电池预警运行';
-      } else {
-        els.topologyBadge.textContent = '在线供电路径';
+      if (els.topologyBadge) {
+        if (faultPath) {
+          els.topologyBadge.textContent = '故障旁路路径';
+        } else if (onBattery) {
+          els.topologyBadge.textContent = '电池供电路径';
+        } else if (state.lowBattery) {
+          els.topologyBadge.textContent = '电池预警运行';
+        } else {
+          els.topologyBadge.textContent = '在线供电路径';
+        }
       }
-
-      setUnitClass(els.unitMains, state.fault ? 'bad' : state.mainsOn ? 'active' : 'bad');
-      setUnitClass(els.unitTrans, state.fault ? 'warn' : state.mainsOn ? 'active' : 'warn');
-      setUnitClass(els.unitAts, state.fault ? 'bad' : onBattery ? 'warn' : 'active');
-      setUnitClass(els.unitUps, state.fault ? 'bad' : online ? 'active' : 'warn');
-      setUnitClass(els.unitBus, state.fault ? 'bad' : online ? 'active' : 'warn');
-      setUnitClass(els.unitLoad, state.fault ? 'bad' : online ? 'active' : onBattery ? 'warn' : 'info');
-      setUnitClass(els.unitBattery, state.fault ? 'warn' : onBattery || state.lowBattery ? 'warn' : 'active');
-      setUnitClass(els.unitBypass, state.fault ? 'bad' : onBattery ? 'warn' : '');
-      setUnitClass(els.unitMetrics, state.fault ? 'info' : 'info');
-
-      setStreamClass(els.streamMains, state.fault ? 'bad' : state.mainsOn ? 'active' : 'bad', state.mainsOn);
-      setStreamClass(els.streamTrans, state.fault ? 'warn' : state.mainsOn ? 'active' : 'warn', state.mainsOn);
-      setStreamClass(els.streamAts, state.fault ? 'bad' : onBattery ? 'warn' : 'active', true);
-      setStreamClass(els.streamUps, faultPath ? 'bad' : online ? 'active' : 'warn', true);
-      setStreamClass(els.streamBus, faultPath ? 'bad' : online ? 'active' : 'warn', true);
-      setStreamClass(els.streamLoad, faultPath ? 'bad' : online ? 'active' : onBattery ? 'warn' : 'active', true);
-      setStreamClass(els.streamBattery, onBattery || state.lowBattery ? 'warn' : 'info', onBattery || state.lowBattery);
-      setStreamClass(els.streamBypass, faultPath ? 'bad' : onBattery ? 'warn' : '', faultPath || onBattery);
-
-      els.mainsUnitState.textContent = state.mainsOn ? '正常' : '已断电';
-      els.mainsUnitValue.textContent = state.mainsOn ? '10kV / 380V' : '0V';
-      els.transUnitState.textContent = state.mainsOn ? '在线' : '待命';
-      els.transUnitValue.textContent = state.mainsOn ? 'AUTO' : '备用';
-      els.atsUnitState.textContent = faultPath ? '旁路切换' : onBattery ? '切入电池' : '自动切换';
-      els.atsUnitValue.textContent = faultPath ? '告警' : onBattery ? '放电' : '热备';
-      els.upsUnitState.textContent = faultPath ? '故障' : online ? '在线' : '放电';
-      els.upsUnitValue.textContent = faultPath ? '逆变异常' : online ? '输入 1' : '电池接管';
-      els.busUnitState.textContent = faultPath ? '异常' : online ? '供电中' : '维持供电';
-      els.busUnitValue.textContent = '输出 1';
-      els.loadUnitState.textContent = faultPath ? '告警' : online ? '正常' : '后备';
-      els.loadUnitValue.textContent = Math.round(state.load) + '%';
-      els.batteryUnitState.textContent = state.lowBattery ? '低压' : onBattery ? '放电中' : '待机充电';
-      els.batteryUnitValue.textContent = '输入 2';
-      els.bypassUnitState.textContent = faultPath ? '切入' : onBattery ? '待命' : '正常';
-      els.bypassUnitValue.textContent = faultPath ? '运行中' : '输出 2';
-      els.metricsUnitState.textContent = faultPath ? '故障监测' : onBattery ? '电池监测' : '在线监测';
-      els.metricsUnitValue.textContent = `输出 3 / ${Math.round(state.temp)}℃`;
       applyRouteFocus();
       renderRoutePanel(false);
       refreshSelectedUpsStatus();

@@ -726,7 +726,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         }
       } catch (error) {
         clearTimeout(timer);
-        zhihangSidebarResult(`接口不可达：${error.message}`, true);
+        zhihangSidebarResult(error.name === 'AbortError' ? '查询超时：智航接口不可达，请检查网络后重试。' : `查询失败：${error.message}`, true);
       }
     }
 
@@ -765,7 +765,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         clearTimeout(timer);
         state.dataSource = '智航模拟数据';
         updateDataSourceBadges();
-        zhihangSidebarResult(`接口不可达，已使用模拟数据：${error.message}`, true);
+        zhihangSidebarResult(error.name === 'AbortError' ? '查询超时：智航接口不可达，已切换为模拟数据。' : `查询失败，已使用模拟数据：${error.message}`, true);
       }
     }
 

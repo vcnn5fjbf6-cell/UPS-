@@ -84,7 +84,8 @@
     const material = new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
-      depthWrite: false
+      depthWrite: false,
+      depthTest: false
     });
     const sprite = new THREE.Sprite(material);
     const width = scale || Math.max(2.2, text.length * 0.36);

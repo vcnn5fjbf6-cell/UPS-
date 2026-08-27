@@ -399,6 +399,9 @@
       createCabinet({
         x: pos.x,
         z: pos.z,
+        w: 2.0,
+        h: 2.8,
+        d: 1.1,
         label: `${device.name} · 三相UPS · ${device.model || 'UPS5000E'}`,
         deviceId: device.id,
         kind: 'ups'
@@ -723,14 +726,14 @@
     container.appendChild(renderer.domElement);
 
     camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
-    camera.position.set(0, 20, 30);
+    camera.position.set(0, 17, 25);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 2.5, 0);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.minDistance = 14;
-    controls.maxDistance = 90;
+    controls.minDistance = 12;
+    controls.maxDistance = 80;
     controls.maxPolarAngle = 1.4;
 
     const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);

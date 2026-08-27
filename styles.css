@@ -1595,6 +1595,57 @@
       font-weight: 700;
     }
 
+    .zhihang-sidebar {
+      display: grid;
+      gap: 10px;
+    }
+
+    .zhihang-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .zhihang-field label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .zhihang-field input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #0b1118;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+    }
+
+    .zhihang-field input:focus {
+      border-color: rgba(99, 179, 255, 0.55);
+      box-shadow: 0 0 0 3px rgba(99, 179, 255, 0.08);
+    }
+
+    .zhihang-actions {
+      display: grid;
+      gap: 6px;
+    }
+
+    .zhihang-sidebar-result {
+      min-height: 120px;
+      max-height: 240px;
+      overflow: auto;
+      padding: 10px;
+      border-radius: 8px;
+      background: #0b1118;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     .settings-panel {
       display: none;
       gap: 10px;

@@ -634,6 +634,21 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       }
     }
 
+    function applyZhihangRealtimeValues(payload) {
+      state.inputV = pointValue(payload, window.zhihangPoints.inputV, state.inputV);
+      state.outputV = pointValue(payload, window.zhihangPoints.outputV, state.outputV);
+      state.load = pointValue(payload, window.zhihangPoints.load, state.load);
+      state.battery = pointValue(payload, window.zhihangPoints.battery, state.battery);
+      state.temp = pointValue(payload, window.zhihangPoints.temp, state.temp);
+      state.runtime = pointValue(payload, window.zhihangPoints.runtime, state.runtime);
+      state.current = pointValue(payload, window.zhihangPoints.current, state.current);
+      state.freq = pointValue(payload, window.zhihangPoints.freq, state.freq);
+      state.bus = pointValue(payload, window.zhihangPoints.bus, state.bus);
+      state.mainsOn = pointValue(payload, window.zhihangPoints.mains, state.mainsOn ? 1 : 0) !== 0;
+      state.fault = pointValue(payload, window.zhihangPoints.fault, state.fault ? 1 : 0) !== 0;
+      state.dataSource = '智航实时数据';
+    }
+
     async function syncZhihangRealtime() {
       const resultEl = document.getElementById('zhihangSyncResult');
       const points = Object.values(window.zhihangPoints || {});
@@ -656,18 +671,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         const data = await response.json();
         if (data.ok && data.data) {
           const payload = data.data;
-          state.inputV = pointValue(payload, window.zhihangPoints.inputV, state.inputV);
-          state.outputV = pointValue(payload, window.zhihangPoints.outputV, state.outputV);
-          state.load = pointValue(payload, window.zhihangPoints.load, state.load);
-          state.battery = pointValue(payload, window.zhihangPoints.battery, state.battery);
-          state.temp = pointValue(payload, window.zhihangPoints.temp, state.temp);
-          state.runtime = pointValue(payload, window.zhihangPoints.runtime, state.runtime);
-          state.current = pointValue(payload, window.zhihangPoints.current, state.current);
-          state.freq = pointValue(payload, window.zhihangPoints.freq, state.freq);
-          state.bus = pointValue(payload, window.zhihangPoints.bus, state.bus);
-          state.mainsOn = pointValue(payload, window.zhihangPoints.mains, state.mainsOn ? 1 : 0) !== 0;
-          state.fault = pointValue(payload, window.zhihangPoints.fault, state.fault ? 1 : 0) !== 0;
-          state.dataSource = '智航实时数据';
+          applyZhihangRealtimeValues(payload);
           if (resultEl) resultEl.textContent = '同步成功：当前运行数据来自智航 CMDB';
         } else {
           state.dataSource = '智航模拟数据';
@@ -681,6 +685,104 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       updateMetrics(true);
       updateTopology();
       runAiInspection(false);
+    }
+
+    function zhihangSidebarResult(text, isError = false) {
+      const el = document.getElementById('zhihangSidebarResult');
+      if (!el) return;
+      el.textContent = text;
+      el.style.color = isError ? '#ff9d9d' : 'var(--muted)';
+    }
+
+    function splitZhihangIds(value) {
+      return String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+    }
+
+    async function queryZhihangDevices() {
+      const domain = document.getElementById('zhihangDomain').value.trim();
+      const objIds = splitZhihangIds(document.getElementById('zhihangObjIds').value);
+      if (!domain || !objIds.length) {
+        zhihangSidebarResult('请输入数据中心域号和模型 OBJ ID。', true);
+        return;
+      }
+      zhihangSidebarResult('正在查询智航设备实例...');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch('/api/zhihang/devices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domainCode: domain, objIds }),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        const data = await response.json();
+        if (data.ok) {
+          const list = Array.isArray(data.data) ? data.data : [];
+          const lines = list.slice(0, 25).map(item => `${item.insName || item.name || '-'}  (${item.insId || item.id || ''})`);
+          zhihangSidebarResult(`查询成功：${list.length} 个设备实例\n\n${lines.join('\n')}`);
+        } else {
+          zhihangSidebarResult(`查询失败：${data.error || '未知错误'}`, true);
+        }
+      } catch (error) {
+        clearTimeout(timer);
+        zhihangSidebarResult(`接口不可达：${error.message}`, true);
+      }
+    }
+
+    async function queryZhihangRealtime() {
+      const ids = splitZhihangIds(document.getElementById('zhihangPointIds').value);
+      if (!ids.length) {
+        zhihangSidebarResult('请输入实时测点 ID。', true);
+        return;
+      }
+      zhihangSidebarResult('正在查询智航实时数据...');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch('/api/zhihang/realtime', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points: ids }),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        const data = await response.json();
+        if (data.ok && data.data) {
+          applyZhihangRealtimeValues(data.data);
+          updateDataSourceBadges();
+          updateMetrics(true);
+          updateTopology();
+          runAiInspection(false);
+          const entries = Object.entries(data.data).map(([id, value]) => `${id} = ${value && value.reported_value !== undefined ? value.reported_value : '--'}`);
+          zhihangSidebarResult(`实时数据同步成功\n\n${entries.join('\n')}`);
+        } else {
+          state.dataSource = '智航模拟数据';
+          updateDataSourceBadges();
+          zhihangSidebarResult(`查询失败：${data.error || '无数据'}`, true);
+        }
+      } catch (error) {
+        clearTimeout(timer);
+        state.dataSource = '智航模拟数据';
+        updateDataSourceBadges();
+        zhihangSidebarResult(`接口不可达，已使用模拟数据：${error.message}`, true);
+      }
+    }
+
+    function runZhihangAiAnalysis() {
+      const result = runAiInspection(true);
+      if (result) {
+        const lines = [
+          `AI 评分：${result.score}`,
+          `结论：${result.verdict}`,
+          `风险等级：${result.risk}`,
+          `数据源：${state.dataSource}`,
+          '检查项：市电 / 电池 / 逆变 / 温度'
+        ];
+        zhihangSidebarResult(lines.join('\n'));
+      } else {
+        zhihangSidebarResult('AI 分析完成，请查看右侧 AI 巡检面板。');
+      }
     }
 
     function syncSidebar() {
@@ -1485,6 +1587,16 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         if (resultEl) resultEl.textContent = '正在同步智航实时数据...';
         await syncZhihangRealtime();
       });
+    }
+    const zhihangDeviceBtn = document.getElementById('zhihangDeviceBtn');
+    const zhihangRealtimeBtn = document.getElementById('zhihangRealtimeBtn');
+    const zhihangAiBtn = document.getElementById('zhihangAiBtn');
+    if (zhihangDeviceBtn) zhihangDeviceBtn.addEventListener('click', queryZhihangDevices);
+    if (zhihangRealtimeBtn) zhihangRealtimeBtn.addEventListener('click', queryZhihangRealtime);
+    if (zhihangAiBtn) zhihangAiBtn.addEventListener('click', runZhihangAiAnalysis);
+    const zhihangPointIds = document.getElementById('zhihangPointIds');
+    if (zhihangPointIds && window.zhihangPoints) {
+      zhihangPointIds.value = Object.values(window.zhihangPoints).join(',');
     }
     document.getElementById('saveSettingsBtn').addEventListener('click', applySettings);
     if (els.routeModalClose) {

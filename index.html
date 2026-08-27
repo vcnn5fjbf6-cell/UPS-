@@ -152,6 +152,30 @@
           </div>
         </details>
 
+        <details class="sidebar-fold" open>
+          <summary>智航数据查询</summary>
+          <div class="fold-body zhihang-sidebar">
+            <div class="zhihang-field">
+              <label for="zhihangDomain">数据中心域号</label>
+              <input id="zhihangDomain" type="text" placeholder="如 32" />
+            </div>
+            <div class="zhihang-field">
+              <label for="zhihangObjIds">模型 OBJ ID</label>
+              <input id="zhihangObjIds" type="text" placeholder="如 OBJ-356,OBJ-342" />
+            </div>
+            <div class="zhihang-field">
+              <label for="zhihangPointIds">实时测点 ID</label>
+              <input id="zhihangPointIds" type="text" placeholder="多个用逗号分隔" />
+            </div>
+            <div class="zhihang-actions">
+              <button class="sidebar-btn" id="zhihangDeviceBtn" type="button"><span>查询设备实例</span><span>⌕</span></button>
+              <button class="sidebar-btn" id="zhihangRealtimeBtn" type="button"><span>查询实时数据</span><span>↻</span></button>
+              <button class="sidebar-btn" id="zhihangAiBtn" type="button"><span>AI 分析</span><span>◈</span></button>
+            </div>
+            <div class="zhihang-sidebar-result" id="zhihangSidebarResult">输入域号和 OBJ ID 后查询设备实例，或输入测点 ID 查询实时数据。</div>
+          </div>
+        </details>
+
         <details class="sidebar-fold">
           <summary>运行概览</summary>
           <div class="fold-body">

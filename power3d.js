@@ -266,6 +266,29 @@
     plate.receiveShadow = true;
     group.add(plate);
 
+    if (options.kind === 'ups' || options.kind === 'output') {
+      const conduitMat = new THREE.MeshStandardMaterial({
+        color: 0x31465a,
+        metalness: 0.7,
+        roughness: 0.35
+      });
+      [-0.42, 0.42].forEach((offset, index) => {
+        const conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.24, 12), conduitMat);
+        conduit.position.set(offset, h / 2 + 0.14, 0);
+        group.add(conduit);
+        const tip = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.05, 0.08, 0.08, 10),
+          new THREE.MeshStandardMaterial({
+            color: index === 0 ? COLORS.info : COLORS.ok,
+            emissive: index === 0 ? COLORS.info : COLORS.ok,
+            emissiveIntensity: 0.9
+          })
+        );
+        tip.position.set(offset, h / 2 + 0.3, 0);
+        group.add(tip);
+      });
+    }
+
     group.position.set(options.x, options.y || h / 2, options.z);
     if (options.rotY) group.rotation.y = options.rotY;
 
@@ -549,17 +572,17 @@
       const upsX = tx + 0.55;
       const outX = tx - 0.55;
       const main = createPath([
-        new THREE.Vector3(tx, 1.25, -4.4),
-        new THREE.Vector3(tx, 1.05, -2.2),
-        new THREE.Vector3(upsX, 1.25, -0.2),
-        new THREE.Vector3(outX, 1.25, 2.0),
-        new THREE.Vector3(tx, 1.1, 4.2)
+        new THREE.Vector3(tx, 2.0, -4.4),
+        new THREE.Vector3(tx, 2.5, -2.2),
+        new THREE.Vector3(upsX, 2.1, -0.2),
+        new THREE.Vector3(outX, 2.1, 2.0),
+        new THREE.Vector3(tx, 1.0, 4.2)
       ], COLORS.info, 0.13);
 
       const battery = createPath([
-        new THREE.Vector3(10.2, 1.2, 1.7),
-        new THREE.Vector3(10.2, 1.05, -0.2),
-        new THREE.Vector3(upsX, 1.05, -0.2)
+        new THREE.Vector3(10.2, 2.2, 1.7),
+        new THREE.Vector3(10.2, 2.5, -0.2),
+        new THREE.Vector3(upsX, 2.1, -0.2)
       ], COLORS.warn, 0.1);
 
       const group = new THREE.Group();
@@ -617,8 +640,8 @@
 
   function buildBusParticles() {
     const points = [
-      new THREE.Vector3(-11.4, 1.08, -2.2),
-      new THREE.Vector3(9.8, 1.08, -2.2)
+      new THREE.Vector3(-11.4, 2.5, -2.2),
+      new THREE.Vector3(9.8, 2.5, -2.2)
     ];
     mainBusCurve = new THREE.CatmullRomCurve3(points);
     for (let i = 0; i < 12; i += 1) {
@@ -646,7 +669,7 @@
     });
     const length = toX - fromX;
     const tray = new THREE.Mesh(new THREE.BoxGeometry(length, 0.16, 0.36), trayMat);
-    tray.position.set((fromX + toX) / 2, 4.55, z);
+    tray.position.set((fromX + toX) / 2, 2.75, z);
     tray.castShadow = true;
     scene.add(tray);
 
@@ -656,8 +679,8 @@
       roughness: 0.45
     });
     for (let x = fromX + 1.6; x <= toX - 1.2; x += 3) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.65, 0.12), postMat);
-      post.position.set(x, 3.72, z);
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.35, 0.12), postMat);
+      post.position.set(x, 2.05, z);
       scene.add(post);
     }
   }
@@ -760,8 +783,8 @@
     });
     const pylonCable = createPath([
       new THREE.Vector3(-12.2, 3.2, -3.9),
-      new THREE.Vector3(-11.5, 1.7, -2.9),
-      new THREE.Vector3(-11.0, 1.35, -2.2)
+      new THREE.Vector3(-11.5, 2.9, -2.9),
+      new THREE.Vector3(-11.0, 2.7, -2.2)
     ], 0x2b3f52, 0.06);
     scene.add(pylonCable.mesh);
 
@@ -769,7 +792,7 @@
       new THREE.BoxGeometry(21.2, 0.55, 0.8),
       new THREE.MeshStandardMaterial({ color: 0x223445, metalness: 0.5, roughness: 0.5 })
     );
-    busBody.position.set(-0.8, 0.95, -2.2);
+    busBody.position.set(-0.8, 2.55, -2.2);
     busBody.castShadow = true;
     busBody.receiveShadow = true;
     scene.add(busBody);
@@ -782,7 +805,7 @@
       opacity: 0.85
     });
     const busGlow = new THREE.Mesh(new THREE.BoxGeometry(20.4, 0.16, 0.42), mainBusMat);
-    busGlow.position.set(-0.8, 1.18, -2.2);
+    busGlow.position.set(-0.8, 2.62, -2.2);
     scene.add(busGlow);
 
     const postMat = new THREE.MeshStandardMaterial({
@@ -791,8 +814,8 @@
       roughness: 0.45
     });
     for (let x = -9.8; x <= 9.2; x += 1.9) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.14), postMat);
-      post.position.set(x, 0.48, -2.2);
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 2.35, 0.14), postMat);
+      post.position.set(x, 1.2, -2.2);
       scene.add(post);
     }
 
@@ -803,14 +826,14 @@
     });
     for (let x = -8.4; x <= 8.4; x += 2.8) {
       const chevron = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.55, 10), chevronMat);
-      chevron.position.set(x, 1.34, -2.2);
+      chevron.position.set(x, 2.72, -2.2);
       chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
       scene.add(chevron);
       busChevrons.push(chevron);
     }
 
     const busLabel = makeLabel('ATS 双路切换母线', 3.2);
-    busLabel.position.set(-0.8, 1.9, -2.2);
+    busLabel.position.set(-0.8, 3.25, -2.2);
     scene.add(busLabel);
 
     createCabinet({

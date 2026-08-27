@@ -305,29 +305,26 @@
     group.add(plate);
 
     if (options.kind === 'ups') {
-      const terminalMat = new THREE.MeshStandardMaterial({
-        color: 0x8fa2b8,
+      const conduitMat = new THREE.MeshStandardMaterial({
+        color: 0x31465a,
         metalness: 0.7,
         roughness: 0.35
       });
-      const inTerm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.3), terminalMat);
-      inTerm.position.set(-w / 2 - 0.05, 0.1, 0);
-      group.add(inTerm);
-      const inTip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.05, 0.1, 0.16),
-        new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 0.9 })
-      );
-      inTip.position.set(-w / 2 - 0.11, 0.1, 0);
-      group.add(inTip);
-      const outTerm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.3), terminalMat);
-      outTerm.position.set(w / 2 + 0.05, 0.1, 0);
-      group.add(outTerm);
-      const outTip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.05, 0.1, 0.16),
-        new THREE.MeshStandardMaterial({ color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.9 })
-      );
-      outTip.position.set(w / 2 + 0.11, 0.1, 0);
-      group.add(outTip);
+      [-0.42, 0.42].forEach((offset, index) => {
+        const conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.24, 12), conduitMat);
+        conduit.position.set(offset, h / 2 + 0.14, 0);
+        group.add(conduit);
+        const tip = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.05, 0.08, 0.08, 10),
+          new THREE.MeshStandardMaterial({
+            color: index === 0 ? COLORS.info : COLORS.ok,
+            emissive: index === 0 ? COLORS.info : COLORS.ok,
+            emissiveIntensity: 0.9
+          })
+        );
+        tip.position.set(offset, h / 2 + 0.3, 0);
+        group.add(tip);
+      });
     }
 
     group.position.set(options.x, h / 2, options.z);
@@ -408,7 +405,7 @@
       });
     });
 
-    const busY = 0.9;
+    const busY = 2.8;
     const inputBus = createPath([
       new THREE.Vector3(-8.6, busY, -5.4),
       new THREE.Vector3(8.6, busY, -5.4)
@@ -445,25 +442,25 @@
     DEVICES.forEach((device, index) => {
       const pos = devicePosition(index);
       const inputFeeder = createPath([
-        new THREE.Vector3(pos.x, busY, -5.4),
-        new THREE.Vector3(pos.x, 1.05, pos.z - 0.45)
+        new THREE.Vector3(pos.x - 0.42, busY, -5.4),
+        new THREE.Vector3(pos.x - 0.42, 2.35, pos.z)
       ], 0.09, COLORS.info);
       scene.add(inputFeeder.mesh);
       addFlowArrows(inputFeeder.curve, 2, COLORS.info);
 
       const outputFeeder = createPath([
-        new THREE.Vector3(pos.x, 1.05, pos.z + 0.45),
-        new THREE.Vector3(pos.x, busY, 5.4)
+        new THREE.Vector3(pos.x + 0.42, 2.35, pos.z),
+        new THREE.Vector3(pos.x + 0.42, busY, 5.4)
       ], 0.09, COLORS.ok);
       scene.add(outputFeeder.mesh);
       addFlowArrows(outputFeeder.curve, 2, COLORS.ok);
     });
 
     const inLabel = makeLabel('进电输入', 2.2);
-    inLabel.position.set(-12.2, 1.8, -5.4);
+    inLabel.position.set(-12.2, 3.3, -5.4);
     scene.add(inLabel);
     const outLabel = makeLabel('输出负载', 2.2);
-    outLabel.position.set(-12.2, 1.8, 5.4);
+    outLabel.position.set(-12.2, 3.3, 5.4);
     scene.add(outLabel);
 
     const caption = makeLabel('全站 UPS 实物阵列 · 46 台', 5);

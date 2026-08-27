@@ -97,3 +97,4 @@ http://127.0.0.1:8000/index.html
 - 接入智航标准模型库：模型库文件置于 `model-library/`，UPS 设备详情同步显示标准模型“三相UPS”、`ref_id` 与 `objId`。
 - 页面新增“智航标准模型库”展示模块，直接显示 UPS、变压器、ATS、电池组、配电柜的标准模型、`ref_id` 与 `objId`。
 - 接入智航数据查询：`zhihang-cmdb` 脚本置于 `model-library/`，页面新增“智航数据查询”模块，本地提供 `/api/zhihang/status`、`models`、`realtime`、`devices` 查询接口。
+- 接入身份证号查证件技能：`id-cert-query` 置于 `model-library/`，并安装为 Codex 本地技能，可按身份证号查询高压/低压电工证、制冷操作证、登高证等持证信息。

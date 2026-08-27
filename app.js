@@ -453,18 +453,53 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     ];
     window.upsMonitorRoutes = transformerRoutes;
 
-    const upsDevices = [
-      { id: '1', name: '1#UPS1-4', model: 'UPS5000E', routeId: '1', transformer: '1#变', input: '1AA5 / 1AA6 / 1AA7', output: '1AU1 - 1AU6', load: '1#UPS集中旁路 / 机房与新风机房' },
-      { id: '2', name: '2#UPS1-4', model: 'UPS5000E', routeId: '2', transformer: '2#变', input: '2AA4 / 2AA6', output: '2#UPS输出柜', load: '2#UPS集中旁路 / 冷源备用' },
-      { id: '3', name: '3#UPS', model: 'UPS5000E', routeId: '3', transformer: '3#变', input: '3AA5 / 3AA6', output: '3UPS / 11UPS / 12UPS', load: '网络设备 / 维修旁路' },
-      { id: '4', name: '4#UPS', model: 'UPS5000E', routeId: '4', transformer: '4#变', input: '4AA5 / 4AA6', output: '4UPS / 13UPS', load: '楼控与监控链路' },
-      { id: '5', name: '5#UPS1-3', model: 'UPS5000E', routeId: '5', transformer: '5#变', input: '5AA5 / 5AA6', output: '5UPS输出', load: '4#冷机 / 5#冷源系统备用' },
-      { id: '6', name: '6#UPS1-3', model: 'UPS5000H', routeId: '6', transformer: '6#变', input: '6AA5 / 6AA6', output: '6UPS输出', load: '3#冷冻 / 冷却泵 / 冷塔风机' },
-      { id: '7', name: '7#UPS', model: 'UPS5000H', routeId: '7', transformer: '7#变', input: '7AA8', output: '7AA9 / 7AU5', load: '机房6-10奇数空调' },
-      { id: '8', name: '8#UPS1-4', model: 'UPS5000H', routeId: '8', transformer: '8#变', input: '8AA7', output: '8AA5 / 8AA6', load: '机房偶数空调 / 插座' },
-      { id: '9', name: '9#UPS1-3', model: 'UPS5000H', routeId: '9', transformer: '9#变', input: '9AA6 / 9AA7', output: '9UPS输出', load: 'CH3 / 5#冷机备用' },
-      { id: '10', name: '10#UPS', model: 'UPS5000H', routeId: '10', transformer: '10#变', input: '10AA7', output: '10AA8', load: '楼控DDC / 大屏 / 环控' }
-    ];
+    const UPS_COUNTS = {
+      '1': 4,
+      '2': 4,
+      '3': 5,
+      '4': 5,
+      '5': 5,
+      '6': 5,
+      '7': 5,
+      '8': 5,
+      '9': 4,
+      '10': 4
+    };
+
+    transformerRoutes.forEach(route => {
+      route.upsCount = UPS_COUNTS[route.id] || 1;
+    });
+
+    const UPS_ROUTE_META = {
+      '1': { input: '1AA5 / 1AA6 / 1AA7', output: '1AU1 - 1AU6', load: '1#UPS集中旁路 / 机房与新风机房' },
+      '2': { input: '2AA4 / 2AA6', output: '2#UPS输出柜', load: '2#UPS集中旁路 / 冷源备用' },
+      '3': { input: '3AA5 / 3AA6', output: '3UPS / 11UPS / 12UPS', load: '网络设备 / 维修旁路' },
+      '4': { input: '4AA5 / 4AA6', output: '4UPS / 13UPS', load: '楼控与监控链路' },
+      '5': { input: '5AA5 / 5AA6', output: '5UPS输出', load: '4#冷机 / 5#冷源系统备用' },
+      '6': { input: '6AA5 / 6AA6', output: '6UPS输出', load: '3#冷冻 / 冷却泵 / 冷塔风机' },
+      '7': { input: '7AA8', output: '7AA9 / 7AU5', load: '机房6-10奇数空调' },
+      '8': { input: '8AA7', output: '8AA5 / 8AA6', load: '机房偶数空调 / 插座' },
+      '9': { input: '9AA6 / 9AA7', output: '9UPS输出', load: 'CH3 / 5#冷机备用' },
+      '10': { input: '10AA7', output: '10AA8', load: '楼控DDC / 大屏 / 环控' }
+    };
+
+    const upsDevices = [];
+    Object.entries(UPS_COUNTS).forEach(([routeId, count]) => {
+      const meta = UPS_ROUTE_META[routeId];
+      const model = Number(routeId) <= 5 ? 'UPS5000E' : 'UPS5000H';
+      for (let unit = 1; unit <= count; unit += 1) {
+        upsDevices.push({
+          id: `${routeId}-${unit}`,
+          name: `${routeId}#UPS${unit}`,
+          model,
+          routeId,
+          transformer: `${routeId}#变`,
+          input: meta.input,
+          output: meta.output,
+          load: meta.load
+        });
+      }
+    });
     window.upsMonitorDevices = upsDevices;
 
     function nowLabel() {
@@ -660,8 +695,8 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       els.routeModalTitle.textContent = route.title;
       els.routeModalPath.textContent = route.path;
       els.routeModalStatus.textContent = `${route.status} / ${liveStatus}`;
-      els.routeModalLoad.textContent = route.loadTag;
-      els.routeModalZone.textContent = `${route.code} 配电图走向`;
+      els.routeModalLoad.textContent = `${route.loadTag} · UPS ${route.upsCount || 1}台`;
+      els.routeModalZone.textContent = `${route.code} 配电图走向（${route.upsCount || 1}台UPS）`;
       els.routeModalSteps.innerHTML = '';
       route.steps.forEach((step, index) => {
         const stepEl = document.createElement('div');
@@ -825,7 +860,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       if (els.routeTitle) els.routeTitle.textContent = route.title;
       if (els.routePath) els.routePath.textContent = route.path;
       if (els.routeStatus) els.routeStatus.textContent = route.status;
-      if (els.routeLoad) els.routeLoad.textContent = `${route.loadTag} / ${liveStatus}`;
+      if (els.routeLoad) els.routeLoad.textContent = `${route.loadTag} · UPS ${route.upsCount || 1}台 / ${liveStatus}`;
       if (refreshSteps && els.routeSteps) {
         els.routeSteps.innerHTML = '';
         route.steps.forEach((step, index) => {

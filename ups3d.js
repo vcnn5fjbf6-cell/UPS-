@@ -43,11 +43,16 @@
   const fans = [];
   const hmiScreens = [];
   let lastHmiTick = -1;
+  const FLEET_COLS = 8;
+  const FLEET_ROWS = 6;
 
   function devicePosition(index) {
+    const col = index % FLEET_COLS;
+    const row = Math.floor(index / FLEET_COLS);
+    const stagger = row % 2 === 1 ? 1.025 : 0;
     return {
-      x: -8.1 + index * 1.8,
-      z: index % 2 === 0 ? -0.35 : 0.35
+      x: -7.2 + col * 2.05 + stagger,
+      z: -3.8 + row * 1.6
     };
   }
 
@@ -358,7 +363,7 @@
 
   function buildScene() {
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(24, 9),
+      new THREE.PlaneGeometry(28, 14),
       new THREE.MeshStandardMaterial({ color: 0x0a1119, roughness: 0.92, metalness: 0.1 })
     );
     floor.rotation.x = -Math.PI / 2;
@@ -366,12 +371,12 @@
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const grid = new THREE.GridHelper(24, 24, 0x2b3d50, 0x182330);
+    const grid = new THREE.GridHelper(28, 28, 0x2b3d50, 0x182330);
     grid.position.y = 0.02;
     scene.add(grid);
 
     const platform = new THREE.Mesh(
-      new THREE.BoxGeometry(20, 0.28, 5.2),
+      new THREE.BoxGeometry(19.5, 0.28, 11.4),
       new THREE.MeshStandardMaterial({ color: 0x141f2b, roughness: 0.62, metalness: 0.35 })
     );
     platform.position.set(0, 0.14, 0);
@@ -379,7 +384,7 @@
     scene.add(platform);
 
     const aisle = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.3, 5.4),
+      new THREE.PlaneGeometry(1.3, 8.6),
       new THREE.MeshStandardMaterial({
         color: 0x0c1a26,
         emissive: 0x0c1a26,
@@ -405,22 +410,22 @@
 
     const busY = 0.9;
     const inputBus = createPath([
-      new THREE.Vector3(-8.4, busY, -1.6),
-      new THREE.Vector3(8.4, busY, -1.6)
+      new THREE.Vector3(-8.6, busY, -5.4),
+      new THREE.Vector3(8.6, busY, -5.4)
     ], 0.16, COLORS.info);
     scene.add(inputBus.mesh);
     const outputBus = createPath([
-      new THREE.Vector3(-8.4, busY, 1.6),
-      new THREE.Vector3(8.4, busY, 1.6)
+      new THREE.Vector3(-8.6, busY, 5.4),
+      new THREE.Vector3(8.6, busY, 5.4)
     ], 0.16, COLORS.ok);
     scene.add(outputBus.mesh);
 
-    [-6.3, -3.15, 0, 3.15, 6.3].forEach(x => {
+    [-8, -6, -4, -2, 0, 2, 4, 6, 8].forEach(x => {
       const chevron = new THREE.Mesh(
         new THREE.ConeGeometry(0.16, 0.42, 10),
         new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 0.7 })
       );
-      chevron.position.set(x, busY + 0.18, -1.6);
+      chevron.position.set(x, busY + 0.18, -5.4);
       chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
       scene.add(chevron);
       chevrons.push(chevron);
@@ -428,41 +433,41 @@
         new THREE.ConeGeometry(0.16, 0.42, 10),
         new THREE.MeshStandardMaterial({ color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.7 })
       );
-      chevronOut.position.set(x, busY + 0.18, 1.6);
+      chevronOut.position.set(x, busY + 0.18, 5.4);
       chevronOut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
       scene.add(chevronOut);
       chevrons.push(chevronOut);
     });
 
-    addFlowArrows(inputBus.curve, 10, COLORS.info);
-    addFlowArrows(outputBus.curve, 10, COLORS.ok);
+    addFlowArrows(inputBus.curve, 14, COLORS.info);
+    addFlowArrows(outputBus.curve, 14, COLORS.ok);
 
     DEVICES.forEach((device, index) => {
       const pos = devicePosition(index);
       const inputFeeder = createPath([
-        new THREE.Vector3(pos.x, busY, -1.6),
-        new THREE.Vector3(pos.x, 1.05, -0.35)
+        new THREE.Vector3(pos.x, busY, -5.4),
+        new THREE.Vector3(pos.x, 1.05, pos.z - 0.45)
       ], 0.09, COLORS.info);
       scene.add(inputFeeder.mesh);
       addFlowArrows(inputFeeder.curve, 2, COLORS.info);
 
       const outputFeeder = createPath([
-        new THREE.Vector3(pos.x, 1.05, 0.35),
-        new THREE.Vector3(pos.x, busY, 1.6)
+        new THREE.Vector3(pos.x, 1.05, pos.z + 0.45),
+        new THREE.Vector3(pos.x, busY, 5.4)
       ], 0.09, COLORS.ok);
       scene.add(outputFeeder.mesh);
       addFlowArrows(outputFeeder.curve, 2, COLORS.ok);
     });
 
     const inLabel = makeLabel('进电输入', 2.2);
-    inLabel.position.set(-10.4, 1.6, -1.6);
+    inLabel.position.set(-12.2, 1.8, -5.4);
     scene.add(inLabel);
     const outLabel = makeLabel('输出负载', 2.2);
-    outLabel.position.set(-10.4, 1.6, 1.6);
+    outLabel.position.set(-12.2, 1.8, 5.4);
     scene.add(outLabel);
 
-    const caption = makeLabel('UPS 实物阵列 1# - 10#', 4.2);
-    caption.position.set(0, 3.6, 0);
+    const caption = makeLabel('全站 UPS 实物阵列 · 46 台', 5);
+    caption.position.set(0, 5.6, 0);
     scene.add(caption);
 
     selectionRing = new THREE.Mesh(
@@ -683,7 +688,7 @@
 
   function init() {
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x0a1119, 26, 50);
+    scene.fog = new THREE.Fog(0x0a1119, 38, 72);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -694,16 +699,16 @@
     renderer.domElement.setAttribute('aria-label', '全站 UPS 实物阵列 3D 展示');
     container.appendChild(renderer.domElement);
 
-    camera = new THREE.PerspectiveCamera(46, 1, 0.1, 80);
-    camera.position.set(0, 7, 14.5);
+    camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
+    camera.position.set(0, 14.5, 22);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 1.7, 0);
+    controls.target.set(0, 2.2, 0);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.minDistance = 7;
-    controls.maxDistance = 34;
-    controls.maxPolarAngle = 1.38;
+    controls.minDistance = 10;
+    controls.maxDistance = 56;
+    controls.maxPolarAngle = 1.4;
 
     const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);
     scene.add(hemi);

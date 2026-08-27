@@ -482,7 +482,7 @@
 
     .ups3d-wrap {
       position: relative;
-      min-height: 460px;
+      min-height: 560px;
       border-radius: 12px;
       overflow: hidden;
       background:
@@ -2405,7 +2405,7 @@
         padding: 10px 12px;
       }
       .ups3d-wrap {
-        min-height: 360px;
+        min-height: 420px;
       }
       .ups3d-hud {
         left: 10px;

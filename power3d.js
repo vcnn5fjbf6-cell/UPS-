@@ -649,9 +649,9 @@
       ], COLORS.info, 0.07);
 
       const battery = createAngledPath([
-        new THREE.Vector3(10.2, 2.4, 1.7),
-        new THREE.Vector3(10.2, 8.0, 1.7),
-        new THREE.Vector3(10.2, 8.0, -0.2),
+        new THREE.Vector3(16.9, 2.4, 4.4),
+        new THREE.Vector3(16.9, 8.0, 4.4),
+        new THREE.Vector3(16.9, 8.0, -0.2),
         new THREE.Vector3(upsX, 8.0, -0.2),
         new THREE.Vector3(upsX, 2.5, -0.2)
       ], COLORS.warn, 0.055);
@@ -977,10 +977,10 @@
       });
     });
 
-    [9.7, 11.2, 12.7].forEach((x, index) => {
+    [15.4, 16.9, 18.4].forEach((x, index) => {
       createBatteryBank({
         x,
-        z: 2.0,
+        z: 4.4,
         label: `铅酸阀控蓄电池组 ${index + 1}`
       });
     });
@@ -1001,9 +1001,13 @@
       addTopJunctionBox(outX, 2.6, 2.0, COLORS.ok);
     });
 
-    [9.7, 11.2, 12.7].forEach(x => {
-      addCableDrop(x, 8.38, 2.0, x, 2.45, 2.0, 0x3b5a75);
+    [15.4, 16.9, 18.4].forEach(x => {
+      addCableDrop(x, 8.38, 4.4, x, 2.45, 4.4, 0x3b5a75);
     });
+
+    const batteryCaption = makeLabel('电池组区', 3.0);
+    batteryCaption.position.set(16.9, 3.4, 4.4);
+    scene.add(batteryCaption);
 
     const caption = makeLabel('1#-10# 变压器阵列', 3.2);
     caption.position.set(-10.3, 3.5, -4.4);

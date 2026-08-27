@@ -573,7 +573,7 @@
       const outX = tx - 0.55;
       const main = createPath([
         new THREE.Vector3(tx, 2.0, -4.4),
-        new THREE.Vector3(tx, 2.5, -2.2),
+        new THREE.Vector3(tx, 3.0, -2.2),
         new THREE.Vector3(upsX, 2.1, -0.2),
         new THREE.Vector3(outX, 2.1, 2.0),
         new THREE.Vector3(tx, 1.0, 4.2)
@@ -581,7 +581,7 @@
 
       const battery = createPath([
         new THREE.Vector3(10.2, 2.2, 1.7),
-        new THREE.Vector3(10.2, 2.5, -0.2),
+        new THREE.Vector3(10.2, 3.0, -0.2),
         new THREE.Vector3(upsX, 2.1, -0.2)
       ], COLORS.warn, 0.1);
 
@@ -640,8 +640,8 @@
 
   function buildBusParticles() {
     const points = [
-      new THREE.Vector3(-11.4, 2.5, -2.2),
-      new THREE.Vector3(9.8, 2.5, -2.2)
+      new THREE.Vector3(-11.4, 3.1, -2.2),
+      new THREE.Vector3(9.8, 3.1, -2.2)
     ];
     mainBusCurve = new THREE.CatmullRomCurve3(points);
     for (let i = 0; i < 12; i += 1) {
@@ -669,7 +669,7 @@
     });
     const length = toX - fromX;
     const tray = new THREE.Mesh(new THREE.BoxGeometry(length, 0.16, 0.36), trayMat);
-    tray.position.set((fromX + toX) / 2, 2.75, z);
+    tray.position.set((fromX + toX) / 2, 3.35, z);
     tray.castShadow = true;
     scene.add(tray);
 
@@ -679,8 +679,8 @@
       roughness: 0.45
     });
     for (let x = fromX + 1.6; x <= toX - 1.2; x += 3) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.35, 0.12), postMat);
-      post.position.set(x, 2.05, z);
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.95, 0.12), postMat);
+      post.position.set(x, 2.35, z);
       scene.add(post);
     }
   }
@@ -811,7 +811,7 @@
     const pylonCable = createPath([
       new THREE.Vector3(-12.2, 3.2, -3.9),
       new THREE.Vector3(-11.5, 2.9, -2.9),
-      new THREE.Vector3(-11.0, 2.7, -2.2)
+      new THREE.Vector3(-11.0, 3.2, -2.2)
     ], 0x2b3f52, 0.06);
     scene.add(pylonCable.mesh);
 
@@ -819,7 +819,7 @@
       new THREE.BoxGeometry(21.2, 0.55, 0.8),
       new THREE.MeshStandardMaterial({ color: 0x223445, metalness: 0.5, roughness: 0.5 })
     );
-    busBody.position.set(-0.8, 2.55, -2.2);
+    busBody.position.set(-0.8, 3.1, -2.2);
     busBody.castShadow = true;
     busBody.receiveShadow = true;
     scene.add(busBody);
@@ -832,7 +832,7 @@
       opacity: 0.85
     });
     const busGlow = new THREE.Mesh(new THREE.BoxGeometry(20.4, 0.16, 0.42), mainBusMat);
-    busGlow.position.set(-0.8, 2.62, -2.2);
+    busGlow.position.set(-0.8, 3.17, -2.2);
     scene.add(busGlow);
 
     const postMat = new THREE.MeshStandardMaterial({
@@ -841,8 +841,8 @@
       roughness: 0.45
     });
     for (let x = -9.8; x <= 9.2; x += 1.9) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 2.35, 0.14), postMat);
-      post.position.set(x, 1.2, -2.2);
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 2.9, 0.14), postMat);
+      post.position.set(x, 1.45, -2.2);
       scene.add(post);
     }
 
@@ -853,14 +853,14 @@
     });
     for (let x = -8.4; x <= 8.4; x += 2.8) {
       const chevron = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.55, 10), chevronMat);
-      chevron.position.set(x, 2.72, -2.2);
+      chevron.position.set(x, 3.27, -2.2);
       chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
       scene.add(chevron);
       busChevrons.push(chevron);
     }
 
     const busLabel = makeLabel('ATS 双路切换母线', 3.2);
-    busLabel.position.set(-0.8, 3.25, -2.2);
+    busLabel.position.set(-0.8, 3.75, -2.2);
     scene.add(busLabel);
 
     createCabinet({
@@ -920,16 +920,16 @@
       const tx = transformerX(index);
       const upsX = tx + 0.55;
       const outX = tx - 0.55;
-      addCableDrop(tx, 2.78, -4.4, tx, 2.08, -4.4, 0x3b5a75);
-      addCableDrop(upsX, 2.78, -0.2, upsX, 2.2, -0.2, 0x3b5a75);
-      addCableDrop(outX, 2.78, 2.0, outX, 2.2, 2.0, 0x3b5a75);
-      addCableDrop(tx, 2.78, 4.2, tx, 1.08, 4.2, 0x3b5a75);
+      addCableDrop(tx, 3.38, -4.4, tx, 2.08, -4.4, 0x3b5a75);
+      addCableDrop(upsX, 3.38, -0.2, upsX, 2.2, -0.2, 0x3b5a75);
+      addCableDrop(outX, 3.38, 2.0, outX, 2.2, 2.0, 0x3b5a75);
+      addCableDrop(tx, 3.38, 4.2, tx, 1.08, 4.2, 0x3b5a75);
       addTopJunctionBox(upsX, 2.34, -0.2, COLORS.info);
       addTopJunctionBox(outX, 2.34, 2.0, COLORS.ok);
     });
 
     [9.7, 11.2, 12.7].forEach(x => {
-      addCableDrop(x, 2.78, 2.0, x, 2.26, 2.0, 0x3b5a75);
+      addCableDrop(x, 3.38, 2.0, x, 2.26, 2.0, 0x3b5a75);
     });
 
     const caption = makeLabel('1#-10# 变压器阵列', 3.2);

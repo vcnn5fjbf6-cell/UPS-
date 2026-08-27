@@ -417,6 +417,28 @@
     ], 0.16, COLORS.ok);
     scene.add(outputBus.mesh);
 
+    const trayMat = new THREE.MeshStandardMaterial({
+      color: 0x1a2632,
+      metalness: 0.65,
+      roughness: 0.4
+    });
+    const supportMat = new THREE.MeshStandardMaterial({
+      color: 0x243747,
+      metalness: 0.6,
+      roughness: 0.45
+    });
+    [-5.4, 5.4].forEach(z => {
+      const tray = new THREE.Mesh(new THREE.BoxGeometry(18, 0.14, 0.5), trayMat);
+      tray.position.set(0, 3.08, z);
+      tray.castShadow = true;
+      scene.add(tray);
+      [-8, 0, 8].forEach(x => {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 3.0, 0.14), supportMat);
+        post.position.set(x, 1.5, z);
+        scene.add(post);
+      });
+    });
+
     [-8, -6, -4, -2, 0, 2, 4, 6, 8].forEach(x => {
       const chevron = new THREE.Mesh(
         new THREE.ConeGeometry(0.16, 0.42, 10),

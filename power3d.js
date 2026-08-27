@@ -685,6 +685,33 @@
     }
   }
 
+  function addTopJunctionBox(x, y, z, color) {
+    const boxMat = new THREE.MeshStandardMaterial({
+      color: 0x223445,
+      metalness: 0.6,
+      roughness: 0.5
+    });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.16, 0.56), boxMat);
+    box.position.set(x, y, z);
+    box.castShadow = true;
+    scene.add(box);
+    const glow = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.06, 0.28),
+      new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.9 })
+    );
+    glow.position.set(x, y + 0.1, z);
+    scene.add(glow);
+  }
+
+  function addCableDrop(fromX, fromY, fromZ, toX, toY, toZ, color) {
+    const cable = createPath([
+      new THREE.Vector3(fromX, fromY, fromZ),
+      new THREE.Vector3(toX, toY, toZ)
+    ], color, 0.07);
+    scene.add(cable.mesh);
+    return cable;
+  }
+
   function buildScene() {
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(38, 20),
@@ -887,6 +914,22 @@
 
     [-4.4, -0.2, 2.0, 4.2].forEach(z => {
       addCableTray(z, -10.2, 9.5);
+    });
+
+    ROUTES.forEach((route, index) => {
+      const tx = transformerX(index);
+      const upsX = tx + 0.55;
+      const outX = tx - 0.55;
+      addCableDrop(tx, 2.78, -4.4, tx, 2.08, -4.4, 0x3b5a75);
+      addCableDrop(upsX, 2.78, -0.2, upsX, 2.2, -0.2, 0x3b5a75);
+      addCableDrop(outX, 2.78, 2.0, outX, 2.2, 2.0, 0x3b5a75);
+      addCableDrop(tx, 2.78, 4.2, tx, 1.08, 4.2, 0x3b5a75);
+      addTopJunctionBox(upsX, 2.34, -0.2, COLORS.info);
+      addTopJunctionBox(outX, 2.34, 2.0, COLORS.ok);
+    });
+
+    [9.7, 11.2, 12.7].forEach(x => {
+      addCableDrop(x, 2.78, 2.0, x, 2.26, 2.0, 0x3b5a75);
     });
 
     const caption = makeLabel('1#-10# 变压器阵列', 3.2);

@@ -438,6 +438,39 @@
       }
     }
 
+    const busbarMat = new THREE.MeshStandardMaterial({
+      color: 0xc2410c,
+      metalness: 0.75,
+      roughness: 0.3
+    });
+    for (let row = 0; row < 3; row += 1) {
+      const rowBar = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.06, 0.08), busbarMat);
+      rowBar.position.set(0, 0.65 + row * 0.65 + 0.06, -0.42);
+      group.add(rowBar);
+    }
+    for (let row = 0; row < 2; row += 1) {
+      const y1 = 0.65 + row * 0.65 + 0.06;
+      const y2 = 0.65 + (row + 1) * 0.65 + 0.06;
+      const link = new THREE.Mesh(new THREE.BoxGeometry(0.08, y2 - y1, 0.08), busbarMat);
+      link.position.set(-0.78, (y1 + y2) / 2, -0.42);
+      group.add(link);
+    }
+    const terminalMat = new THREE.MeshStandardMaterial({
+      color: 0xff5a5a,
+      emissive: 0xff5a5a,
+      emissiveIntensity: 0.8
+    });
+    const terminalMat2 = new THREE.MeshStandardMaterial({
+      color: 0x222a33,
+      metalness: 0.8,
+      roughness: 0.35
+    });
+    [-0.92, 0.92].forEach((offset, index) => {
+      const terminal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), index === 0 ? terminalMat : terminalMat2);
+      terminal.position.set(offset, 2.05, -0.42);
+      group.add(terminal);
+    });
+
     const frameMat = new THREE.MeshStandardMaterial({
       color: 0x22313d,
       metalness: 0.55,
@@ -548,6 +581,25 @@
     );
     warning.position.set(cx, 0.16, cz - 2.05);
     scene.add(warning);
+
+    const busbarMat = new THREE.MeshStandardMaterial({
+      color: COLORS.warn,
+      emissive: COLORS.warn,
+      emissiveIntensity: 0.55,
+      metalness: 0.7,
+      roughness: 0.35
+    });
+    const roomBus = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.1, 0.24), busbarMat);
+    roomBus.position.set(cx, 2.78, cz);
+    scene.add(roomBus);
+
+    [15.4, 16.9, 18.4].forEach(x => {
+      const riser = createPath([
+        new THREE.Vector3(x, 2.5, cz),
+        new THREE.Vector3(x, 2.76, cz)
+      ], COLORS.warn, 0.04);
+      scene.add(riser.mesh);
+    });
   }
 
   function createLoadBlock(options) {
@@ -719,7 +771,7 @@
       ], COLORS.info, 0.07);
 
       const battery = createAngledPath([
-        new THREE.Vector3(16.9, 2.4, 4.4),
+        new THREE.Vector3(16.9, 2.8, 4.4),
         new THREE.Vector3(16.9, 8.0, 4.4),
         new THREE.Vector3(16.9, 8.0, -0.2),
         new THREE.Vector3(upsX, 8.0, -0.2),

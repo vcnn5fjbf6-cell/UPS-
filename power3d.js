@@ -847,44 +847,46 @@
       metalness: 0.6,
       roughness: 0.4
     });
-    [-4.2, -3.6].forEach(z => {
+    const armMat = new THREE.MeshStandardMaterial({
+      color: 0x26394b,
+      metalness: 0.6,
+      roughness: 0.45
+    });
+    const mainsFeeders = [
+      { z: -5.4, label: '市电 1', busX: -11.0 },
+      { z: -2.9, label: '市电 2', busX: -8.2 }
+    ];
+    mainsFeeders.forEach((feeder, index) => {
       const pylon = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 4.6, 20), pylonMat);
-      pylon.position.set(-12.2, 2.3, z);
+      pylon.position.set(-15.5, 2.3, feeder.z);
       pylon.castShadow = true;
       scene.add(pylon);
       const ring = new THREE.Mesh(
         new THREE.CylinderGeometry(0.72, 0.72, 0.16, 24),
         new THREE.MeshStandardMaterial({ color: COLORS.info, emissive: COLORS.info, emissiveIntensity: 1.2 })
       );
-      ring.position.set(-12.2, 3.4, z);
+      ring.position.set(-15.5, 3.4, feeder.z);
       scene.add(ring);
-    });
-    const mainsLabel = makeLabel('市电双路', 2.6);
-    mainsLabel.position.set(-12.2, 5.1, -3.9);
-    scene.add(mainsLabel);
-
-    const armMat = new THREE.MeshStandardMaterial({
-      color: 0x26394b,
-      metalness: 0.6,
-      roughness: 0.45
-    });
-    [-4.2, -3.6].forEach(z => {
       const arm = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.12, 0.12), armMat);
-      arm.position.set(-12.2, 3.7, z);
+      arm.position.set(-15.5, 3.7, feeder.z);
       scene.add(arm);
       const insulator = new THREE.Mesh(
         new THREE.SphereGeometry(0.1, 10, 10),
         new THREE.MeshStandardMaterial({ color: 0x8fa2b8, roughness: 0.5 })
       );
-      insulator.position.set(-12.2, 3.86, z);
+      insulator.position.set(-15.5, 3.86, feeder.z);
       scene.add(insulator);
+      const cable = createPath([
+        new THREE.Vector3(-15.5, 3.2, feeder.z),
+        new THREE.Vector3(-14.9, 3.0, feeder.z + (index === 0 ? 0.35 : -0.35)),
+        new THREE.Vector3(-14.4, 8.2, feeder.z),
+        new THREE.Vector3(feeder.busX, 8.2, -2.2)
+      ], 0x2b3f52, 0.03);
+      scene.add(cable.mesh);
+      const label = makeLabel(feeder.label, 2.2);
+      label.position.set(-15.5, 5.4, feeder.z);
+      scene.add(label);
     });
-    const pylonCable = createPath([
-      new THREE.Vector3(-12.2, 3.2, -3.9),
-      new THREE.Vector3(-11.5, 2.9, -2.9),
-      new THREE.Vector3(-11.0, 8.2, -2.2)
-    ], 0x2b3f52, 0.03);
-    scene.add(pylonCable.mesh);
 
     const busBody = new THREE.Mesh(
       new THREE.BoxGeometry(28, 0.28, 0.5),

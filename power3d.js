@@ -514,8 +514,8 @@
   }
 
   function createBatteryRoom() {
-    const cx = 16.9;
-    const cz = 4.4;
+    const cx = 22.0;
+    const cz = 5.0;
     const wallMat = new THREE.MeshStandardMaterial({
       color: 0x1c2a38,
       metalness: 0.6,
@@ -593,7 +593,7 @@
     roomBus.position.set(cx, 2.78, cz);
     scene.add(roomBus);
 
-    [15.4, 16.9, 18.4].forEach(x => {
+    [20.6, 22.0, 23.4].forEach(x => {
       const riser = createPath([
         new THREE.Vector3(x, 2.5, cz),
         new THREE.Vector3(x, 2.76, cz)
@@ -771,9 +771,9 @@
       ], COLORS.info, 0.07);
 
       const battery = createAngledPath([
-        new THREE.Vector3(16.9, 2.8, 4.4),
-        new THREE.Vector3(16.9, 8.0, 4.4),
-        new THREE.Vector3(16.9, 8.0, -0.2),
+        new THREE.Vector3(22.0, 2.8, 5.0),
+        new THREE.Vector3(22.0, 8.0, 5.0),
+        new THREE.Vector3(22.0, 8.0, -0.2),
         new THREE.Vector3(upsX, 8.0, -0.2),
         new THREE.Vector3(upsX, 2.5, -0.2)
       ], COLORS.warn, 0.055);
@@ -907,7 +907,7 @@
 
   function buildScene() {
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(50, 22),
+      new THREE.PlaneGeometry(60, 26),
       new THREE.MeshStandardMaterial({ color: 0x0a1119, roughness: 0.92, metalness: 0.1 })
     );
     floor.rotation.x = -Math.PI / 2;
@@ -915,12 +915,12 @@
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const grid = new THREE.GridHelper(50, 50, 0x2b3d50, 0x182330);
+    const grid = new THREE.GridHelper(60, 60, 0x2b3d50, 0x182330);
     grid.position.y = 0.02;
     scene.add(grid);
 
     const platform = new THREE.Mesh(
-      new THREE.BoxGeometry(40, 0.28, 14),
+      new THREE.BoxGeometry(52, 0.28, 20),
       new THREE.MeshStandardMaterial({ color: 0x141f2b, roughness: 0.62, metalness: 0.35 })
     );
     platform.position.set(0, 0.14, -0.1);
@@ -1099,10 +1099,10 @@
       });
     });
 
-    [15.4, 16.9, 18.4].forEach((x, index) => {
+    [20.6, 22.0, 23.4].forEach((x, index) => {
       createBatteryBank({
         x,
-        z: 4.4,
+        z: 5.0,
         label: `铅酸阀控蓄电池组 ${index + 1}`
       });
     });
@@ -1110,6 +1110,7 @@
     [-4.4, -0.2, 2.0, 4.2].forEach(z => {
       addCableTray(z, -12.2, 13.5);
     });
+    addCableTray(5.0, 19.5, 24.5);
 
     ROUTES.forEach((route, index) => {
       const tx = transformerX(index);
@@ -1123,12 +1124,12 @@
       addTopJunctionBox(outX, 2.6, 2.0, COLORS.ok);
     });
 
-    [15.4, 16.9, 18.4].forEach(x => {
-      addCableDrop(x, 8.38, 4.4, x, 2.45, 4.4, 0x3b5a75);
+    [20.6, 22.0, 23.4].forEach(x => {
+      addCableDrop(x, 8.38, 5.0, x, 2.45, 5.0, 0x3b5a75);
     });
 
     const batteryCaption = makeLabel('电池组区', 3.0);
-    batteryCaption.position.set(16.9, 3.4, 4.4);
+    batteryCaption.position.set(22.0, 3.4, 5.0);
     scene.add(batteryCaption);
     createBatteryRoom();
 
@@ -1198,14 +1199,14 @@
     container.appendChild(renderer.domElement);
 
     camera = new THREE.PerspectiveCamera(44, 1, 0.1, 120);
-    camera.position.set(0, 16, 28);
+    camera.position.set(0, 19, 34);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 2.5, -0.3);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.minDistance = 9;
-    controls.maxDistance = 80;
+    controls.maxDistance = 100;
     controls.maxPolarAngle = 1.42;
 
     const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);

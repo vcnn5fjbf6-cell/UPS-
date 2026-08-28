@@ -115,17 +115,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       aiInputTag: document.getElementById('aiInputTag'),
       aiBatteryTag: document.getElementById('aiBatteryTag'),
       aiFaultTag: document.getElementById('aiFaultTag'),
-      sidebarMode: document.getElementById('sidebarMode'),
-      sidebarAiScore: document.getElementById('sidebarAiScore'),
-      sidebarAlarmCount: document.getElementById('sidebarAlarmCount'),
-      settingsFold: document.getElementById('settingsFold'),
-      settingsPanel: document.getElementById('settingsPanel'),
-      autoAi: document.getElementById('autoAi'),
-      aiInterval: document.getElementById('aiInterval'),
-      tempWarn: document.getElementById('tempWarn'),
-      tempBad: document.getElementById('tempBad'),
-      batteryWarn: document.getElementById('batteryWarn'),
-      batteryBad: document.getElementById('batteryBad'),
       sidebarLogoutBtn: document.getElementById('sidebarLogoutBtn'),
       topologyBadge: document.getElementById('topologyBadge'),
       routeTitle: document.getElementById('routeTitle'),
@@ -915,10 +904,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       const alarmText = String(alarms.length);
       const batteryText = Math.round(state.battery) + '%';
 
-      els.sidebarMode.textContent = modeText;
-      els.sidebarAiScore.textContent = scoreText;
-      els.sidebarAlarmCount.textContent = alarmText;
-
       els.summaryMode.textContent = modeText;
       els.summaryAi.textContent = scoreText;
       els.summaryAlarm.textContent = alarmText;
@@ -949,27 +934,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       };
       downloadText(`UPS巡检数据-${Date.now()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
       pushLog('info', '巡检数据导出', '巡检数据已生成并下载。');
-    }
-
-    function applySettings() {
-      state.settings.autoAi = els.autoAi.checked;
-      state.settings.aiInterval = Number(els.aiInterval.value) || 8;
-      state.settings.tempWarn = Number(els.tempWarn.value) || 45;
-      state.settings.tempBad = Number(els.tempBad.value) || 55;
-      state.settings.batteryWarn = Number(els.batteryWarn.value) || 30;
-      state.settings.batteryBad = Number(els.batteryBad.value) || 15;
-
-      clearInterval(aiTimer);
-      if (state.settings.autoAi) {
-        aiTimer = setInterval(() => runAiInspection(false), Math.max(3, state.settings.aiInterval) * 1000);
-      }
-      pushLog('info', '系统设置', '巡检阈值和自动巡检策略已更新。');
-    }
-
-    function toggleSettingsPanel() {
-      if (els.settingsFold) {
-        els.settingsFold.open = !els.settingsFold.open;
-      }
     }
 
     function scrollToSection(id) {
@@ -1698,7 +1662,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     if (zhihangPointIds && window.zhihangPoints) {
       zhihangPointIds.value = Object.values(window.zhihangPoints).join(',');
     }
-    document.getElementById('saveSettingsBtn').addEventListener('click', applySettings);
     if (els.routeModalClose) {
       els.routeModalClose.addEventListener('click', closeRouteModal);
     }
@@ -1719,12 +1682,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     });
 
     initAuth();
-    els.autoAi.checked = state.settings.autoAi;
-    els.aiInterval.value = state.settings.aiInterval;
-    els.tempWarn.value = state.settings.tempWarn;
-    els.tempBad.value = state.settings.tempBad;
-    els.batteryWarn.value = state.settings.batteryWarn;
-    els.batteryBad.value = state.settings.batteryBad;
 
     decoratePowerUnits();
     bindPowerSceneCamera();

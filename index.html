@@ -157,60 +157,11 @@
           </div>
         </details>
 
-        <details class="sidebar-fold">
-          <summary>系统操作</summary>
-          <div class="fold-body">
-            <button class="sidebar-btn" id="sidebarResetBtn"><span>恢复正常</span><span>↺</span></button>
-            <button class="sidebar-btn" id="sidebarLogoutBtn"><span>退出登录</span><span>⇥</span></button>
-          </div>
-        </details>
-
-        <details class="sidebar-fold">
-          <summary>运行概览</summary>
-          <div class="fold-body">
-            <div class="sidebar-stat">
-              <div class="label">当前模式</div>
-              <div class="value" id="sidebarMode">在线供电</div>
-            </div>
-            <div class="sidebar-stat">
-              <div class="label">AI 评分</div>
-              <div class="value" id="sidebarAiScore">96</div>
-            </div>
-            <div class="sidebar-stat">
-              <div class="label">活动告警</div>
-              <div class="value" id="sidebarAlarmCount">0</div>
-            </div>
-          </div>
-        </details>
-
         <details class="sidebar-fold" id="settingsFold">
           <summary>系统设置</summary>
           <div class="fold-body settings-panel open" id="settingsPanel">
-            <div class="setting-row inline">
-              <label for="autoAi">自动AI巡检</label>
-              <input type="checkbox" id="autoAi" checked />
-            </div>
-            <div class="setting-row">
-              <label for="aiInterval">巡检间隔（秒）</label>
-              <input type="number" id="aiInterval" min="3" max="60" step="1" value="8" />
-            </div>
-            <div class="setting-row">
-              <label for="tempWarn">温度预警（℃）</label>
-              <input type="number" id="tempWarn" min="35" max="55" step="1" value="45" />
-            </div>
-            <div class="setting-row">
-              <label for="tempBad">温度告警（℃）</label>
-              <input type="number" id="tempBad" min="40" max="65" step="1" value="55" />
-            </div>
-            <div class="setting-row">
-              <label for="batteryWarn">电池预警（%）</label>
-              <input type="number" id="batteryWarn" min="10" max="50" step="1" value="30" />
-            </div>
-            <div class="setting-row">
-              <label for="batteryBad">电池临界（%）</label>
-              <input type="number" id="batteryBad" min="5" max="30" step="1" value="15" />
-            </div>
-            <button class="primary" id="saveSettingsBtn">保存设置</button>
+            <button class="sidebar-btn" id="sidebarResetBtn"><span>恢复正常</span><span>↺</span></button>
+            <button class="sidebar-btn" id="sidebarLogoutBtn"><span>退出登录</span><span>⇥</span></button>
           </div>
         </details>
 

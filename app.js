@@ -1202,7 +1202,6 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
       renderDistributionMap();
       renderRoutePanel(true);
       updateTopology();
-      openRouteModal(route);
       if (window.UPS3D) window.UPS3D.setRoute(route.id);
     }
 

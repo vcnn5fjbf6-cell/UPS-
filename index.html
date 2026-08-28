@@ -181,6 +181,20 @@
                 </div>
               </div>
               <div class="topology-transformer-bar" id="transformerButtons"></div>
+              <div class="route-panel">
+                <div class="route-summary">
+                  <div>
+                    <div class="route-kicker">当前选中走向</div>
+                    <div class="route-title" id="routeTitle">1#变（2000KVA）</div>
+                    <div class="route-path" id="routePath">市电进线 / 补偿 / ATS / 1#UPS</div>
+                  </div>
+                  <div class="route-badges" id="routeBadges">
+                    <span class="route-badge" id="routeStatus">主路</span>
+                    <span class="route-badge" id="routeLoad">上级配电</span>
+                  </div>
+                </div>
+                <div class="route-steps" id="routeSteps"></div>
+              </div>
               <div class="power3d-wrap" id="power3dWrap">
                 <div id="power3dContainer" aria-label="配电架构 3D 模拟实物展示"></div>
               </div>
@@ -193,20 +207,6 @@
                   <div id="ups3dContainer" aria-label="全站 UPS 实物阵列 3D 展示"></div>
                 </div>
               </div>
-            </div>
-            <div class="route-panel">
-              <div class="route-summary">
-                <div>
-                  <div class="route-kicker">当前选中走向</div>
-                  <div class="route-title" id="routeTitle">1#变（2000KVA）</div>
-                  <div class="route-path" id="routePath">市电进线 / 补偿 / ATS / 1#UPS</div>
-                </div>
-                <div class="route-badges" id="routeBadges">
-                  <span class="route-badge" id="routeStatus">主路</span>
-                  <span class="route-badge" id="routeLoad">上级配电</span>
-                </div>
-              </div>
-              <div class="route-steps" id="routeSteps"></div>
             </div>
           </article>
         </section>

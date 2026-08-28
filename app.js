@@ -516,6 +516,21 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     };
     window.zhihangPoints = ZHIHANG_POINTS;
 
+    const ZHIHANG_POINT_NAMES = {
+      '1.1.5.2.4.1': '输入电压',
+      '1.1.5.2.32.1': '输出电压',
+      '1.1.5.2.54.1': '负载率',
+      '1.1.5.2.58.1': '电池容量',
+      '1.1.5.2.59.1': '机柜温度',
+      '1.1.5.2.57.1': '电池续航',
+      '1.1.5.2.56.1': '电池电流',
+      '1.1.5.2.38.1': '输出频率',
+      '1.1.5.2.29.1': '母线电压',
+      '1.1.5.2.2.1': '供电模式',
+      '1.1.5.2.9998.1': '设备通讯'
+    };
+    window.zhihangPointNames = ZHIHANG_POINT_NAMES;
+
     const upsDevices = [];
     Object.entries(UPS_COUNTS).forEach(([routeId, count]) => {
       const meta = UPS_ROUTE_META[routeId];
@@ -809,9 +824,25 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
 
     function updateLiveRealtime(payload) {
       const el = document.getElementById('zhihangLiveRealtime');
-      if (!el || !payload) return;
-      const lines = Object.entries(payload).map(([id, value]) => `${id} = ${value && value.reported_value !== undefined ? value.reported_value : '--'}`);
-      el.textContent = `实时数据（${new Date().toLocaleTimeString('zh-CN', { hour12: false })}）\n${lines.join('\n')}`;
+      const panel = document.getElementById('zhihangRealtimeParams');
+      const timeEl = document.getElementById('rtpTime');
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      if (el && payload) {
+        const lines = Object.entries(payload).map(([id, value]) => `${id} = ${value && value.reported_value !== undefined ? value.reported_value : '--'}`);
+        el.textContent = `实时数据（${time}）\n${lines.join('\n')}`;
+      }
+      if (timeEl) timeEl.textContent = time;
+      if (panel) {
+        if (!payload || !Object.keys(payload).length) {
+          panel.textContent = '暂无智航实时数据';
+          return;
+        }
+        panel.innerHTML = Object.entries(payload).map(([id, value]) => {
+          const name = window.zhihangPointNames && window.zhihangPointNames[id] ? window.zhihangPointNames[id] : id;
+          const current = value && value.reported_value !== undefined ? value.reported_value : '--';
+          return `<div class="rtp-row"><span class="name">${name}</span><b>${current}</b><code>${id}</code></div>`;
+        }).join('');
+      }
     }
 
     function startZhihangLive() {

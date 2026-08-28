@@ -1746,6 +1746,22 @@
       box-shadow: 0 0 0 1px rgba(99,179,255,0.08) inset;
     }
 
+    .topology-transformer-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .topology-transformer-bar .transformer-btn {
+      min-height: 0;
+      padding: 7px 10px;
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 6px;
+      align-items: center;
+    }
+
     .panel-head {
       display: flex;
       justify-content: space-between;

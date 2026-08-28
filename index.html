@@ -140,9 +140,23 @@
             <div class="zhihang-actions">
               <button class="sidebar-btn" id="zhihangDeviceBtn" type="button"><span>查询设备实例</span><span>⌕</span></button>
               <button class="sidebar-btn" id="zhihangRealtimeBtn" type="button"><span>查询实时数据</span><span>↻</span></button>
+              <button class="sidebar-btn" id="zhihangLiveBtn" type="button"><span>开始实时显示</span><span>◉</span></button>
               <button class="sidebar-btn" id="zhihangAiBtn" type="button"><span>AI 分析</span><span>◈</span></button>
             </div>
+            <div class="zhihang-live" id="zhihangLiveRealtime">实时数据：未启动</div>
+            <div class="zhihang-field">
+              <label for="zhihangHistoryHours">历史范围（小时）</label>
+              <input id="zhihangHistoryHours" type="number" value="24" min="1" max="720" />
+            </div>
+            <div class="zhihang-field">
+              <label for="zhihangHistoryInterval">采样间隔（秒）</label>
+              <input id="zhihangHistoryInterval" type="number" value="60" min="1" max="86400" />
+            </div>
+            <div class="zhihang-actions">
+              <button class="sidebar-btn" id="zhihangHistoryBtn" type="button"><span>查询历史数据</span><span>⌛</span></button>
+            </div>
             <div class="zhihang-sidebar-result" id="zhihangSidebarResult">输入域号和 OBJ ID 后查询设备实例，或输入测点 ID 查询实时数据。</div>
+            <div class="zhihang-sidebar-result" id="zhihangHistoryResult">历史数据：未查询</div>
           </div>
         </details>
 

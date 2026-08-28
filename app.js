@@ -775,6 +775,7 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
           const entries = Object.entries(data.data).map(([id, value]) => `${id} = ${value && value.reported_value !== undefined ? value.reported_value : '--'}`);
           const sourceLabel = data.source === 'local-standard' ? '智航本地标准数据' : '智航实时数据';
           zhihangSidebarResult(`${sourceLabel}同步成功\n\n${entries.join('\n')}`);
+          updateLiveRealtime(data.data);
         } else {
           state.dataSource = '智航模拟数据';
           updateDataSourceBadges();
@@ -801,6 +802,79 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
         zhihangSidebarResult(lines.join('\n'));
       } else {
         zhihangSidebarResult('AI 分析完成，请查看右侧 AI 巡检面板。');
+      }
+    }
+
+    let zhihangLiveTimer = null;
+
+    function updateLiveRealtime(payload) {
+      const el = document.getElementById('zhihangLiveRealtime');
+      if (!el || !payload) return;
+      const lines = Object.entries(payload).map(([id, value]) => `${id} = ${value && value.reported_value !== undefined ? value.reported_value : '--'}`);
+      el.textContent = `实时数据（${new Date().toLocaleTimeString('zh-CN', { hour12: false })}）\n${lines.join('\n')}`;
+    }
+
+    function startZhihangLive() {
+      const btn = document.getElementById('zhihangLiveBtn');
+      if (zhihangLiveTimer) {
+        clearInterval(zhihangLiveTimer);
+        zhihangLiveTimer = null;
+        if (btn) btn.innerHTML = '<span>开始实时显示</span><span>◉</span>';
+        return;
+      }
+      const refresh = async () => {
+        const ids = splitZhihangIds(document.getElementById('zhihangPointIds').value);
+        if (!ids.length) return;
+        try {
+          const response = await fetch('/api/zhihang/realtime', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ points: ids })
+          });
+          const data = await response.json();
+          if (data.ok && data.data) updateLiveRealtime(data.data);
+        } catch (error) {
+          const el = document.getElementById('zhihangLiveRealtime');
+          if (el) el.textContent = `实时刷新失败：${error.message}`;
+        }
+      };
+      refresh();
+      zhihangLiveTimer = setInterval(refresh, 5000);
+      if (btn) btn.innerHTML = '<span>停止实时显示</span><span>◉</span>';
+    }
+
+    async function queryZhihangHistory() {
+      const ids = splitZhihangIds(document.getElementById('zhihangPointIds').value);
+      const hours = Number(document.getElementById('zhihangHistoryHours').value) || 24;
+      const interval = Number(document.getElementById('zhihangHistoryInterval').value) || 60;
+      const resultEl = document.getElementById('zhihangHistoryResult');
+      if (!ids.length) {
+        if (resultEl) resultEl.textContent = '请输入实时测点 ID。';
+        return;
+      }
+      if (resultEl) resultEl.textContent = '正在查询历史数据...';
+      const endTime = Date.now();
+      const startTime = endTime - hours * 3600 * 1000;
+      try {
+        const response = await fetch('/api/zhihang/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points: ids, startTime, endTime, interval, function: 'AVG' })
+        });
+        const data = await response.json();
+        if (data.ok && data.data) {
+          const lines = Object.entries(data.data).map(([id, series]) => {
+            const values = (series || []).map(item => item.value);
+            if (!values.length) return `${id} 无数据`;
+            const average = (values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length).toFixed(2);
+            return `${id} 采样${values.length} 平均${average} 最新${values[values.length - 1]}`;
+          });
+          if (resultEl) resultEl.textContent = `历史数据（最近 ${hours} 小时 · ${interval}s · AVG）\n\n${lines.join('\n')}`;
+        } else if (resultEl) {
+          resultEl.textContent = `查询失败：${data.error || '未知错误'}`;
+        }
+      } catch (error) {
+        if (resultEl) resultEl.textContent = `查询失败：${error.message}`;
       }
     }
 
@@ -1585,9 +1659,13 @@ const AUTH_USERS_KEY = 'upsMonitorUsers';
     els.sidebarLogoutBtn.addEventListener('click', () => lockSystem('已退出登录，请重新输入账号。'));
     const zhihangDeviceBtn = document.getElementById('zhihangDeviceBtn');
     const zhihangRealtimeBtn = document.getElementById('zhihangRealtimeBtn');
+    const zhihangLiveBtn = document.getElementById('zhihangLiveBtn');
+    const zhihangHistoryBtn = document.getElementById('zhihangHistoryBtn');
     const zhihangAiBtn = document.getElementById('zhihangAiBtn');
     if (zhihangDeviceBtn) zhihangDeviceBtn.addEventListener('click', queryZhihangDevices);
     if (zhihangRealtimeBtn) zhihangRealtimeBtn.addEventListener('click', queryZhihangRealtime);
+    if (zhihangLiveBtn) zhihangLiveBtn.addEventListener('click', startZhihangLive);
+    if (zhihangHistoryBtn) zhihangHistoryBtn.addEventListener('click', queryZhihangHistory);
     if (zhihangAiBtn) zhihangAiBtn.addEventListener('click', runZhihangAiAnalysis);
     const zhihangPointIds = document.getElementById('zhihangPointIds');
     if (zhihangPointIds && window.zhihangPoints) {

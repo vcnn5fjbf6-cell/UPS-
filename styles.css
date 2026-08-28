@@ -1646,6 +1646,21 @@
       word-break: break-word;
     }
 
+    .zhihang-live {
+      min-height: 88px;
+      max-height: 180px;
+      overflow: auto;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: rgba(73, 209, 125, 0.06);
+      border: 1px solid rgba(73, 209, 125, 0.24);
+      color: #bff5d2;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     .settings-panel {
       display: none;
       gap: 10px;

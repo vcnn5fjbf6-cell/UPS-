@@ -58,6 +58,27 @@ def build_local_point_payload(point_ids):
     return payload
 
 
+def build_local_history(point_ids, start_time, end_time, interval=60):
+    start = int(start_time or 0)
+    end = int(end_time or 0)
+    step = max(1, int(interval or 60)) * 1000
+    if end <= start:
+        end = start + 3600 * 1000
+    count = min(120, int((end - start) / step) + 1)
+    result = {}
+    for point_id in point_ids:
+        base = local_point_value(point_id)
+        seed = sum(ord(char) for char in point_id)
+        result[point_id] = [
+            {
+                "ts": start + index * step,
+                "value": round(base + ((seed + index) % 11 - 5) * 0.05, 2),
+            }
+            for index in range(count)
+        ]
+    return result
+
+
 def zhihang_request(method, path, payload=None, mode="external"):
     base_url = ZHIHANG_API.get(mode, ZHIHANG_API["external"])
     headers = {}
@@ -151,6 +172,42 @@ class StaticHandler(SimpleHTTPRequestHandler):
                     "source": "local-standard",
                     "data": sample,
                 })
+                return
+            self.send_json({"ok": True, "source": "zhihang", "data": result})
+            return
+        if self.path.startswith("/api/zhihang/history"):
+            body = self.read_json_body()
+            if self.query_mode() == "local":
+                history = build_local_history(
+                    body.get("points", []),
+                    body.get("startTime", 0),
+                    body.get("endTime", 0),
+                    body.get("interval", 60),
+                )
+                self.send_json({"ok": True, "source": "local-standard", "data": history})
+                return
+            try:
+                result = zhihang_request(
+                    "POST",
+                    "/tsdb/point_data/v2/search",
+                    {
+                        "startTime": body.get("startTime", 0),
+                        "endTime": body.get("endTime", 0),
+                        "interval": body.get("interval", "60"),
+                        "function": body.get("function", "AVG"),
+                        "strictRange": True,
+                        "pointList": body.get("points", []),
+                    },
+                    mode=self.query_mode(),
+                )
+            except (HTTPError, URLError, ValueError, OSError) as error:
+                history = build_local_history(
+                    body.get("points", []),
+                    body.get("startTime", 0),
+                    body.get("endTime", 0),
+                    body.get("interval", 60),
+                )
+                self.send_json({"ok": True, "source": "local-standard", "data": history})
                 return
             self.send_json({"ok": True, "source": "zhihang", "data": result})
             return

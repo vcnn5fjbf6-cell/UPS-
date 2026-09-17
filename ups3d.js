@@ -61,9 +61,10 @@
     const material = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
-      emissiveIntensity: 0.55,
+      emissiveIntensity: 0.3,
+      envMapIntensity: 0.2,
       transparent: true,
-      opacity: 0.9
+      opacity: 0.86
     });
     const mesh = new THREE.Mesh(geometry, material);
     flowMats.push(material);
@@ -130,35 +131,107 @@
     return sprite;
   }
 
-  function createCoolingFan(group, x, y, z, radius, speed) {
-    const fan = new THREE.Group();
-    const ringMat = new THREE.MeshStandardMaterial({
-      color: 0x243747,
-      metalness: 0.65,
-      roughness: 0.4
-    });
-    const bladeMat = new THREE.MeshStandardMaterial({
-      color: 0x101a24,
-      metalness: 0.7,
-      roughness: 0.3
-    });
-    const hubMat = new THREE.MeshStandardMaterial({
-      color: 0x31465a,
-      metalness: 0.6,
-      roughness: 0.45
-    });
-    const ring = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.05, 20), ringMat);
-    ring.position.y = 0.015;
-    fan.add(ring);
-    for (let i = 0; i < 4; i += 1) {
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(radius * 1.35, 0.04, radius * 0.24), bladeMat);
-      blade.rotation.y = i * Math.PI / 2;
-      blade.position.x = radius * 0.42;
-      fan.add(blade);
+  const KIT = window.UPS3DKit;
+
+  /* ---------------------------------------------------------------
+   * 共享材质：不随运行状态变化的细节零件，全部复用同一批实例
+   * --------------------------------------------------------------- */
+  let sharedMaterials = null;
+  function materials() {
+    if (sharedMaterials) return sharedMaterials;
+    const brushed = KIT.brushedRoughness();
+    sharedMaterials = {
+      dark: new THREE.MeshStandardMaterial({
+        color: 0x0c1218, metalness: 0.55, roughness: 0.62, envMapIntensity: 0.9
+      }),
+      metal: new THREE.MeshStandardMaterial({
+        color: 0x8895a3, metalness: 0.92, roughness: 0.38, roughnessMap: brushed, envMapIntensity: 0.95
+      }),
+      grille: new THREE.MeshStandardMaterial({
+        color: 0x05080b, metalness: 0.35, roughness: 0.9, envMapIntensity: 0.6
+      }),
+      accent: new THREE.MeshStandardMaterial({
+        color: 0x2f76a8, metalness: 0.5, roughness: 0.35, envMapIntensity: 1
+      }),
+      emergency: new THREE.MeshStandardMaterial({
+        color: 0xc0392b, metalness: 0.25, roughness: 0.45, emissive: 0x3a0d08, emissiveIntensity: 0.6
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x080a0d, metalness: 0.15, roughness: 0.95
+      }),
+      insulator: new THREE.MeshPhysicalMaterial({
+        color: 0x7c7568, metalness: 0.05, roughness: 0.42,
+        clearcoat: 0.7, clearcoatRoughness: 0.3, envMapIntensity: 0.55
+      }),
+      copper: new THREE.MeshStandardMaterial({
+        color: 0xb87333, metalness: 0.98, roughness: 0.28, envMapIntensity: 1.2
+      }),
+      screenDark: new THREE.MeshPhysicalMaterial({
+        color: 0x0a1218, metalness: 0.1, roughness: 0.14,
+        clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.9
+      }),
+      warning: new THREE.MeshStandardMaterial({
+        map: KIT.warningTexture('高压危险  请勿开启'),
+        roughness: 0.55, metalness: 0.1
+      })
+    };
+    return sharedMaterials;
+  }
+
+  const plateMats = new Map();
+  function plateMaterial(title, subtitle, accent) {
+    const key = title + '|' + subtitle;
+    if (!plateMats.has(key)) {
+      plateMats.set(key, new THREE.MeshStandardMaterial({
+        map: KIT.nameplateTexture(title, subtitle, accent),
+        roughness: 0.4, metalness: 0.35, envMapIntensity: 0.8
+      }));
     }
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.2, radius * 0.2, 0.1, 12), hubMat);
-    hub.position.y = 0.035;
-    fan.add(hub);
+    return plateMats.get(key);
+  }
+
+  const shadowCache = new Map();
+  function addContactShadow(group, w, d, y) {
+    const key = w.toFixed(2) + '|' + d.toFixed(2);
+    if (!shadowCache.has(key)) {
+      const proto = KIT.contactShadow(w, d, 0.55);
+      shadowCache.set(key, { geometry: proto.geometry, material: proto.material });
+    }
+    const entry = shadowCache.get(key);
+    const mesh = new THREE.Mesh(entry.geometry, entry.material);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = y;
+    mesh.renderOrder = 1;
+    group.add(mesh);
+  }
+
+  /* ---------------------------------------------------------------
+   * 冷却风扇：叶片 + 轮毂合并为一个网格，整体绕中轴旋转
+   * --------------------------------------------------------------- */
+  function createCoolingFan(group, x, y, z, radius, speed) {
+    const builder = new KIT.Builder();
+    const blades = 7;
+    for (let i = 0; i < blades; i += 1) {
+      const angle = (i / blades) * Math.PI * 2;
+      builder.box(
+        'blade',
+        Math.cos(angle) * radius * 0.55, 0, Math.sin(angle) * radius * 0.55,
+        radius * 0.72, 0.016, radius * 0.34,
+        [0, -angle, 0.38]
+      );
+    }
+    builder.cyl('blade', 0, 0, 0, radius * 0.24, 0.075, null, 24);
+    builder.sphere('blade', 0, 0.045, 0, radius * 0.2, [1, 0.5, 1]);
+    const parts = builder.merge();
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x151d26, metalness: 0.72, roughness: 0.34, envMapIntensity: 1.1
+    });
+    const fan = new THREE.Group();
+    Object.keys(parts).forEach(function (key) {
+      const mesh = new THREE.Mesh(parts[key], material);
+      mesh.castShadow = true;
+      fan.add(mesh);
+    });
     fan.position.set(x, y, z);
     fan.userData.speed = speed;
     group.add(fan);
@@ -166,6 +239,9 @@
     return fan;
   }
 
+  /* ---------------------------------------------------------------
+   * 柜门触摸屏：带边框、玻璃反光与实时状态画面
+   * --------------------------------------------------------------- */
   function createHmiScreen(group, options) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
@@ -173,16 +249,32 @@
     const ctx = canvas.getContext('2d');
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.LinearFilter;
-    const mat = new THREE.MeshStandardMaterial({
+    texture.encoding = THREE.sRGBEncoding;
+    const mat = new THREE.MeshPhysicalMaterial({
       map: texture,
       emissive: 0x0b2431,
-      emissiveIntensity: 0.7,
-      roughness: 0.35,
-      metalness: 0.2
+      emissiveIntensity: 0.8,
+      roughness: 0.16,
+      metalness: 0.05,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.06
     });
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(options.w * 0.5, 0.2), mat);
-    screen.position.set(0, options.h * 0.24, options.d / 2 + 0.09);
+    const screenW = options.w * 0.44;
+    const screenH = screenW * 0.375;
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(screenW, screenH), mat);
+    screen.position.set(0, options.screenY, options.screenZ);
     group.add(screen);
+
+    const glass = new THREE.Mesh(
+      new THREE.PlaneGeometry(screenW, screenH),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xbfe4ff, transparent: true, opacity: 0.07,
+        roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02
+      })
+    );
+    glass.position.set(0, options.screenY, options.screenZ + 0.005);
+    group.add(glass);
+
     hmiScreens.push({
       canvas,
       ctx,
@@ -193,138 +285,67 @@
     return screen;
   }
 
+  /* ---------------------------------------------------------------
+   * 机柜几何：一次性构建后按尺寸缓存，46 台共用同一批几何数据
+   * --------------------------------------------------------------- */
+  /* ---------------------------------------------------------------
+   * UPS 机柜实例：几何共享，仅油漆面 / 指示灯 / 屏幕 / 底板独立
+   * --------------------------------------------------------------- */
   function createCabinet(options) {
-    const group = new THREE.Group();
     const w = options.w || 1.7;
     const h = options.h || 2.5;
     const d = options.d || 1.05;
+    const group = new THREE.Group();
+    const mats = materials();
 
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: COLORS.steel,
-      metalness: 0.72,
-      roughness: 0.32
+    const bodyMat = new THREE.MeshPhysicalMaterial({
+      color: 0x46586a,
+      metalness: 0.45,
+      roughness: 0.74,
+      roughnessMap: KIT.brushedRoughness(),
+      clearcoat: 0.45,
+      clearcoatRoughness: 0.28,
+      envMapIntensity: 1.05,
+      emissive: 0x000000,
+      emissiveIntensity: 0
     });
-    const darkMetal = new THREE.MeshStandardMaterial({
-      color: COLORS.steelDark,
-      metalness: 0.62,
-      roughness: 0.52
+    const ledMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 1.2, roughness: 0.3, metalness: 0.2
     });
-    const panelMat = new THREE.MeshStandardMaterial({
-      color: 0x101a24,
-      metalness: 0.5,
-      roughness: 0.58
-    });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bodyMat);
-    body.castShadow = true;
-    body.receiveShadow = true;
-    group.add(body);
-
-    const capMat = new THREE.MeshStandardMaterial({
-      color: 0x243747,
-      metalness: 0.6,
-      roughness: 0.42
-    });
-    const capW = 0.08;
-    [-w / 2 + capW / 2, w / 2 - capW / 2].forEach(x => {
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(capW, h, d), capMat);
-      cap.position.x = x;
-      group.add(cap);
+    const plateMat = new THREE.MeshStandardMaterial({
+      color: 0x1b2836, emissive: 0x000000, emissiveIntensity: 0, metalness: 0.55, roughness: 0.5
     });
 
-    const doorH = h * 0.72;
-    const doorW = w * 0.43;
-    const doorZ = d / 2 + 0.035;
-    [-1, 1].forEach(side => {
-      const door = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.05), panelMat);
-      door.position.set(side * w * 0.23, -h * 0.05, doorZ);
-      group.add(door);
-      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.34, 0.05), darkMetal);
-      handle.position.set(side * w * 0.42, -h * 0.02, doorZ + 0.04);
-      group.add(handle);
+    const parts = KIT.cabinetGeometry(w, h, d, { hmi: true, fans: true, doorStyle: 'double' });
+    const perInstance = { paint: bodyMat, led: ledMat, plate: plateMat };
+    Object.keys(parts).forEach(function (key) {
+      const material = perInstance[key] || mats[key];
+      if (!material) return;
+      const mesh = new THREE.Mesh(parts[key], material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      group.add(mesh);
     });
-
-    const ventMat = new THREE.MeshStandardMaterial({
-      color: 0x0b1118,
-      metalness: 0.3,
-      roughness: 0.85
-    });
-    for (let i = 0; i < 5; i += 1) {
-      const vent = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 0.045, 0.02), ventMat);
-      vent.position.set(0, -h * 0.3 + i * 0.11, doorZ + 0.04);
-      group.add(vent);
-    }
 
     const screen = createHmiScreen(group, {
-      w,
-      h,
-      d,
-      label: options.label || 'UPS'
-    });
-    const screenMat = screen.material;
-
-    const ledMat = new THREE.MeshStandardMaterial({
-      color: COLORS.ok,
-      emissive: COLORS.ok,
-      emissiveIntensity: 1.1
-    });
-    [-1, 0, 1].forEach(offset => {
-      const led = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), ledMat);
-      led.position.set(offset * 0.17, h * 0.4, d / 2 + 0.11);
-      group.add(led);
+      w: w,
+      label: options.label || 'UPS',
+      screenY: h * 0.3,
+      screenZ: d / 2 + 0.079
     });
 
-    const stripMat = new THREE.MeshStandardMaterial({
-      color: 0x2b3f52,
-      emissive: 0x2b3f52,
-      emissiveIntensity: 0.3
-    });
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, 0.04, 0.3), stripMat);
-    strip.position.set(0, h / 2 + 0.08, 0);
-    group.add(strip);
-
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.08, 0.06, d + 0.08), darkMetal);
-    roof.position.y = h / 2 + 0.02;
-    group.add(roof);
-
-    const footGapX = w / 2 - 0.12;
-    const footGapZ = d / 2 - 0.14;
-    [[-footGapX, -footGapZ], [footGapX, -footGapZ], [-footGapX, footGapZ], [footGapX, footGapZ]].forEach(([fx, fz]) => {
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.16), darkMetal);
-      foot.position.set(fx, -h / 2 - 0.05, fz);
-      group.add(foot);
-    });
-
-    const plateMat = new THREE.MeshStandardMaterial({
-      color: 0x223445,
-      emissive: 0x000000,
-      emissiveIntensity: 0.2
-    });
-    const plate = new THREE.Mesh(new THREE.BoxGeometry(w + 0.26, 0.08, d + 0.3), plateMat);
-    plate.position.set(0, -h / 2 - 0.1, 0);
-    plate.receiveShadow = true;
+    const plate = new THREE.Mesh(
+      new THREE.PlaneGeometry(w * 0.34, w * 0.34 * 0.44),
+      plateMaterial(options.plateTitle || 'UPS5000E', options.plateSubtitle || '华为 三相 UPS', '#63b3ff')
+    );
+    plate.position.set(-w * 0.02, h * 0.12, d / 2 + 0.078);
     group.add(plate);
 
-    if (options.kind === 'ups') {
-      const conduitMat = new THREE.MeshStandardMaterial({
-        color: 0x31465a,
-        metalness: 0.7,
-        roughness: 0.35
-      });
-      [-0.42, 0.42].forEach((offset, index) => {
-        const conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.24, 12), conduitMat);
-        conduit.position.set(offset, h / 2 + 0.14, index === 0 ? -0.45 : 0.45);
-        group.add(conduit);
-        const tip = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.05, 0.08, 0.08, 10),
-          new THREE.MeshStandardMaterial({
-            color: index === 0 ? COLORS.info : COLORS.ok,
-            emissive: index === 0 ? COLORS.info : COLORS.ok,
-            emissiveIntensity: 0.9
-          })
-        );
-        tip.position.set(offset, h / 2 + 0.3, index === 0 ? -0.45 : 0.45);
-        group.add(tip);
-      });
+    addContactShadow(group, w + 1.0, d + 1.0, -h / 2 - 0.14);
+
+    if (options.kind !== 'noscreen') {
+      createCoolingFan(group, -w * 0.26, h / 2 + 0.16, 0, 0.23, 2.2);
+      createCoolingFan(group, w * 0.26, h / 2 + 0.16, 0, 0.23, 2.2);
     }
 
     group.position.set(options.x, h / 2, options.z);
@@ -338,18 +359,14 @@
       deviceId: options.deviceId || null,
       kind: 'ups',
       label: options.label || '',
-      bodyMat,
-      ledMat,
-      screenMat,
-      plateMat,
+      bodyMat: bodyMat,
+      ledMat: ledMat,
+      screenMat: screen.material,
+      plateMat: plateMat,
       labelSprite: label
     };
 
-    if (options.kind === 'ups') {
-      createCoolingFan(group, 0, h / 2 + 0.18, -d * 0.32, 0.22, 2.2);
-      createCoolingFan(group, 0, h / 2 + 0.18, d * 0.32, 0.22, 2.2);
-    }
-    group.traverse(object => {
+    group.traverse(function (object) {
       if (object.isMesh) object.userData.cabinet = group;
     });
 
@@ -359,26 +376,71 @@
   }
 
   function buildScene() {
+    const floorMaps = KIT.floorMaps();
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(32, 22),
-      new THREE.MeshStandardMaterial({ color: 0x0a1119, roughness: 0.92, metalness: 0.1 })
+      new THREE.PlaneGeometry(36, 26),
+      new THREE.MeshStandardMaterial({
+        map: floorMaps.map,
+        roughnessMap: floorMaps.roughnessMap,
+        color: 0xd8e4f0,
+        roughness: 0.52,
+        metalness: 0.34,
+        envMapIntensity: 0.9
+      })
     );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.y = 0.01;
+    floor.position.y = 0.005;
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const grid = new THREE.GridHelper(32, 32, 0x2b3d50, 0x182330);
-    grid.position.y = 0.02;
-    scene.add(grid);
-
     const platform = new THREE.Mesh(
-      new THREE.BoxGeometry(22, 0.28, 17.5),
-      new THREE.MeshStandardMaterial({ color: 0x141f2b, roughness: 0.62, metalness: 0.35 })
+      new THREE.BoxGeometry(22, 0.3, 17.6),
+      new THREE.MeshStandardMaterial({
+        color: 0x24323f, roughness: 0.66, metalness: 0.32, envMapIntensity: 0.5
+      })
     );
-    platform.position.set(0, 0.14, 0);
+    platform.position.set(0, 0.15, 0);
     platform.receiveShadow = true;
+    platform.castShadow = true;
     scene.add(platform);
+
+    // 平台边缘的金属压条与黄色安全警示带
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: 0x9fb0c0, metalness: 0.92, roughness: 0.3, envMapIntensity: 1.2
+    });
+    const stripMat = new THREE.MeshStandardMaterial({
+      color: 0xe8c14a, emissive: 0x4a3a08, emissiveIntensity: 0.5, roughness: 0.6, metalness: 0.2
+    });
+    [[0, -8.72, 21.6, 0.12], [0, 8.72, 21.6, 0.12]].forEach(function (row) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(row[2], 0.05, row[3]), stripMat);
+      strip.position.set(row[0], 0.31, row[1]);
+      scene.add(strip);
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(22.1, 0.06, 0.1), trimMat);
+      trim.position.set(row[0], 0.3, row[1] + (row[1] > 0 ? 0.06 : -0.06));
+      scene.add(trim);
+    });
+
+    // 顶部工业灯带：为机柜提供真实的高光条
+    const lampHouseMat = new THREE.MeshStandardMaterial({
+      color: 0x222d38, metalness: 0.6, roughness: 0.5, envMapIntensity: 0.5
+    });
+    const lampMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, emissive: 0xdcefff, emissiveIntensity: 1.35, roughness: 0.2
+    });
+    for (let row = 0; row < FLEET_ROWS; row += 1) {
+      const rowZ = -7.2 + row * 2.4;
+      [-6.5, 0, 6.5].forEach(function (lx) {
+        const house = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.1, 0.34), lampHouseMat);
+        house.position.set(lx, 11.6, rowZ);
+        scene.add(house);
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.035, 0.24), lampMat);
+        panel.position.set(lx, 11.54, rowZ);
+        scene.add(panel);
+        const hanger = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.6, 0.04), lampHouseMat);
+        hanger.position.set(lx, 11.9, rowZ);
+        scene.add(hanger);
+      });
+    }
 
     const aisle = new THREE.Mesh(
       new THREE.PlaneGeometry(1.4, 13.5),
@@ -408,16 +470,12 @@
       });
     });
 
-    const busY = 8.1;
+    const busY = 4.9;
     const trayMat = new THREE.MeshStandardMaterial({
-      color: 0x1a2632,
-      metalness: 0.65,
-      roughness: 0.4
+      color: 0x141d26, metalness: 0.5, roughness: 0.66, envMapIntensity: 0.45
     });
     const supportMat = new THREE.MeshStandardMaterial({
-      color: 0x243747,
-      metalness: 0.6,
-      roughness: 0.45
+      color: 0x1b2733, metalness: 0.55, roughness: 0.62, envMapIntensity: 0.5
     });
     const chevronXs = [-9, -6, -3, 0, 3, 6, 9];
 
@@ -426,14 +484,14 @@
       const inputBus = createPath([
         new THREE.Vector3(-8.6, busY, rowZ - 0.45),
         new THREE.Vector3(8.6, busY, rowZ - 0.45)
-      ], 0.08, COLORS.info);
+      ], 0.055, COLORS.info);
       scene.add(inputBus.mesh);
       addFlowArrows(inputBus.curve, 8, COLORS.info);
 
       const outputBus = createPath([
         new THREE.Vector3(-8.6, busY, rowZ + 0.45),
         new THREE.Vector3(8.6, busY, rowZ + 0.45)
-      ], 0.08, COLORS.ok);
+      ], 0.055, COLORS.ok);
       scene.add(outputBus.mesh);
       addFlowArrows(outputBus.curve, 8, COLORS.ok);
 
@@ -456,14 +514,24 @@
         chevrons.push(chevronOut);
       });
 
-      const tray = new THREE.Mesh(new THREE.BoxGeometry(21, 0.14, 1.5), trayMat);
-      tray.position.set(0, 8.4, rowZ);
-      tray.castShadow = true;
-      scene.add(tray);
-      [-8, 0, 8].forEach(x => {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 8.3, 0.14), supportMat);
-        post.position.set(x, 4.15, rowZ);
-        scene.add(post);
+      const trayBuilder = new KIT.Builder();
+      [-0.74, 0.74].forEach(function (oz) {
+        trayBuilder.box('tray', 0, 5.12, rowZ + oz, 21, 0.14, 0.07);
+        trayBuilder.box('tray', 0, 5.19, rowZ + oz, 21, 0.05, 0.02);
+      });
+      for (let rx = -10.2; rx <= 10.21; rx += 0.62) {
+        trayBuilder.box('tray', rx, 5.1, rowZ, 0.06, 0.045, 1.42);
+      }
+      [-8, 0, 8].forEach(function (x) {
+        trayBuilder.box('support', x, 2.5, rowZ, 0.11, 5.0, 0.11);
+        trayBuilder.box('support', x, 5.02, rowZ, 1.86, 0.07, 0.1);
+      });
+      const trayParts = trayBuilder.merge();
+      Object.keys(trayParts).forEach(function (key) {
+        const mesh = new THREE.Mesh(trayParts[key], key === 'tray' ? trayMat : supportMat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
       });
     }
 
@@ -473,27 +541,27 @@
       const inputFeeder = createPath([
         new THREE.Vector3(pos.x - 0.42, busY, rowZ - 0.45),
         new THREE.Vector3(pos.x - 0.42, 2.55, rowZ - 0.45)
-      ], 0.045, COLORS.info);
+      ], 0.03, COLORS.info);
       scene.add(inputFeeder.mesh);
       addFlowArrows(inputFeeder.curve, 2, COLORS.info);
 
       const outputFeeder = createPath([
         new THREE.Vector3(pos.x + 0.42, 2.55, rowZ + 0.45),
         new THREE.Vector3(pos.x + 0.42, busY, rowZ + 0.45)
-      ], 0.045, COLORS.ok);
+      ], 0.03, COLORS.ok);
       scene.add(outputFeeder.mesh);
       addFlowArrows(outputFeeder.curve, 2, COLORS.ok);
     });
 
     const inLabel = makeLabel('进电输入', 2.2);
-    inLabel.position.set(-13.8, 9.4, -7.65);
+    inLabel.position.set(-12.6, 5.7, -7.65);
     scene.add(inLabel);
     const outLabel = makeLabel('输出负载', 2.2);
-    outLabel.position.set(-13.8, 9.4, 7.65);
+    outLabel.position.set(-12.6, 5.7, 7.65);
     scene.add(outLabel);
 
     const caption = makeLabel('全站 UPS 实物阵列 · 46 台', 5);
-    caption.position.set(0, 6.4, 0);
+    caption.position.set(0, 6.9, 0);
     scene.add(caption);
 
     selectionRing = new THREE.Mesh(
@@ -638,7 +706,7 @@
     flowMats.forEach(mat => {
       mat.color.setHex(color);
       mat.emissive.setHex(color);
-      mat.emissiveIntensity = state.fault ? 0.9 : 0.5;
+      mat.emissiveIntensity = state.fault ? 0.62 : 0.34;
     });
     chevrons.forEach(chevron => {
       chevron.material.color.setHex(color);
@@ -721,33 +789,51 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.0;
+    KIT.installEnvironment(renderer, scene);
     renderer.domElement.setAttribute('aria-label', '全站 UPS 实物阵列 3D 展示');
     container.appendChild(renderer.domElement);
 
     camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
-    camera.position.set(0, 17, 25);
+    camera.position.set(0, 9.6, 19.5);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 2.5, 0);
+    controls.target.set(0, 2.3, 0);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.minDistance = 12;
     controls.maxDistance = 80;
     controls.maxPolarAngle = 1.4;
 
-    const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);
+    const hemi = new THREE.HemisphereLight(0xa8c4dd, 0x0a1119, 1.0);
     scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-    sun.position.set(7, 12, 8);
+    const sun = new THREE.DirectionalLight(0xf4f8ff, 1.2);
+    sun.position.set(11, 20, 13);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
     sun.shadow.mapSize.height = 2048;
+    sun.shadow.camera.left = -18;
+    sun.shadow.camera.right = 18;
+    sun.shadow.camera.top = 18;
+    sun.shadow.camera.bottom = -18;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 62;
+    sun.shadow.bias = -0.0005;
+    sun.shadow.normalBias = 0.02;
     scene.add(sun);
-    const green = new THREE.PointLight(COLORS.ok, 0.6, 24);
+    const fill = new THREE.DirectionalLight(0x9dc4ff, 0.45);
+    fill.position.set(-14, 12, -10);
+    scene.add(fill);
+    // 顶部灯带的实际照明（数量受控，避免影响帧率）
+    [-6.5, 0, 6.5].forEach(function (lx) {
+      const lamp = new THREE.PointLight(0xdcefff, 0.6, 26, 2);
+      lamp.position.set(lx, 11.0, 0);
+      scene.add(lamp);
+    });
+    const green = new THREE.PointLight(COLORS.ok, 0.4, 24);
     green.position.set(5, 5, 4);
     scene.add(green);
-    const blue = new THREE.PointLight(COLORS.info, 0.5, 22);
+    const blue = new THREE.PointLight(COLORS.info, 0.35, 22);
     blue.position.set(-5, 5, -4);
     scene.add(blue);
 

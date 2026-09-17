@@ -156,139 +156,224 @@
     return screen;
   }
 
+  const KIT = window.UPS3DKit;
+
+  /* ---------------------------------------------------------------
+   * 共享材质
+   * --------------------------------------------------------------- */
+  let sharedMaterials = null;
+  function materials() {
+    if (sharedMaterials) return sharedMaterials;
+    const brushed = KIT.brushedRoughness();
+    sharedMaterials = {
+      dark: new THREE.MeshStandardMaterial({
+        color: 0x0c1218, metalness: 0.55, roughness: 0.62, envMapIntensity: 0.9
+      }),
+      metal: new THREE.MeshStandardMaterial({
+        color: 0x8895a3, metalness: 0.92, roughness: 0.38, roughnessMap: brushed, envMapIntensity: 0.95
+      }),
+      grille: new THREE.MeshStandardMaterial({
+        color: 0x05080b, metalness: 0.35, roughness: 0.9, envMapIntensity: 0.6
+      }),
+      accent: new THREE.MeshStandardMaterial({
+        color: 0x2f76a8, metalness: 0.5, roughness: 0.35, envMapIntensity: 1
+      }),
+      emergency: new THREE.MeshStandardMaterial({
+        color: 0xc0392b, metalness: 0.25, roughness: 0.45, emissive: 0x3a0d08, emissiveIntensity: 0.6
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x080a0d, metalness: 0.15, roughness: 0.95
+      }),
+      insulator: new THREE.MeshPhysicalMaterial({
+        color: 0x7c7568, metalness: 0.05, roughness: 0.42,
+        clearcoat: 0.7, clearcoatRoughness: 0.3, envMapIntensity: 0.55
+      }),
+      copper: new THREE.MeshStandardMaterial({
+        color: 0xb87333, metalness: 0.98, roughness: 0.28, envMapIntensity: 1.2
+      }),
+      glass: new THREE.MeshPhysicalMaterial({
+        color: 0x9fd8ff, metalness: 0, roughness: 0.08, transparent: true, opacity: 0.35,
+        clearcoat: 1, clearcoatRoughness: 0.05
+      }),
+      screenDark: new THREE.MeshPhysicalMaterial({
+        color: 0x0a1218, metalness: 0.1, roughness: 0.14,
+        clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.9
+      }),
+      cell: new THREE.MeshStandardMaterial({
+        color: 0x33465a, metalness: 0.35, roughness: 0.55, envMapIntensity: 0.8
+      }),
+      warning: new THREE.MeshStandardMaterial({
+        map: KIT.warningTexture('高压危险  请勿开启'),
+        roughness: 0.55, metalness: 0.1
+      })
+    };
+    return sharedMaterials;
+  }
+
+  const plateMats = new Map();
+  function plateMaterial(title, subtitle, accent) {
+    const key = title + '|' + subtitle;
+    if (!plateMats.has(key)) {
+      plateMats.set(key, new THREE.MeshStandardMaterial({
+        map: KIT.nameplateTexture(title, subtitle, accent),
+        roughness: 0.4, metalness: 0.35, envMapIntensity: 0.8
+      }));
+    }
+    return plateMats.get(key);
+  }
+
+  const shadowCache = new Map();
+  function addContactShadow(group, w, d, y) {
+    const key = w.toFixed(2) + '|' + d.toFixed(2);
+    if (!shadowCache.has(key)) {
+      const proto = KIT.contactShadow(w, d, 0.55);
+      shadowCache.set(key, { geometry: proto.geometry, material: proto.material });
+    }
+    const entry = shadowCache.get(key);
+    const mesh = new THREE.Mesh(entry.geometry, entry.material);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = y;
+    mesh.renderOrder = 1;
+    group.add(mesh);
+  }
+
+  /* ---------------------------------------------------------------
+   * 冷却风扇
+   * --------------------------------------------------------------- */
+  function createCoolingFan(group, x, y, z, radius, speed) {
+    const builder = new KIT.Builder();
+    const blades = 7;
+    for (let i = 0; i < blades; i += 1) {
+      const angle = (i / blades) * Math.PI * 2;
+      builder.box('blade',
+        Math.cos(angle) * radius * 0.55, 0, Math.sin(angle) * radius * 0.55,
+        radius * 0.72, 0.016, radius * 0.34,
+        [0, -angle, 0.38]);
+    }
+    builder.cyl('blade', 0, 0, 0, radius * 0.24, 0.075, null, 24);
+    builder.sphere('blade', 0, 0.045, 0, radius * 0.2, [1, 0.5, 1]);
+    const parts = builder.merge();
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x151d26, metalness: 0.72, roughness: 0.34, envMapIntensity: 1.1
+    });
+    const fan = new THREE.Group();
+    Object.keys(parts).forEach(function (key) {
+      const mesh = new THREE.Mesh(parts[key], material);
+      mesh.castShadow = true;
+      fan.add(mesh);
+    });
+    fan.position.set(x, y, z);
+    fan.userData.speed = speed;
+    group.add(fan);
+    fans.push(fan);
+    return fan;
+  }
+
+  function createHmiScreen(group, options) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.encoding = THREE.sRGBEncoding;
+    const mat = new THREE.MeshPhysicalMaterial({
+      map: texture,
+      emissive: 0x0b2431,
+      emissiveIntensity: 0.8,
+      roughness: 0.16,
+      metalness: 0.05,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.06
+    });
+    const screenW = options.w * 0.44;
+    const screenH = screenW * 0.375;
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(screenW, screenH), mat);
+    screen.position.set(0, options.screenY, options.screenZ);
+    group.add(screen);
+    const glass = new THREE.Mesh(
+      new THREE.PlaneGeometry(screenW, screenH),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xbfe4ff, transparent: true, opacity: 0.07,
+        roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02
+      })
+    );
+    glass.position.set(0, options.screenY, options.screenZ + 0.005);
+    group.add(glass);
+    hmiScreens.push({ canvas, ctx, texture, mat, label: options.label || 'UPS' });
+    return screen;
+  }
+
+  /* ---------------------------------------------------------------
+   * 机柜（UPS / 输出柜 / ATS）：复用共用几何
+   * --------------------------------------------------------------- */
+  function cabinetOptionsFor(kind) {
+    if (kind === 'output') {
+      return { doorStyle: 'single', meters: true, fans: true, breakers: true, breakerRows: 2 };
+    }
+    if (kind === 'ats') {
+      return { doorStyle: 'single', meters: true, fans: false, breakers: true, breakerRows: 1 };
+    }
+    return { doorStyle: 'double', hmi: true, fans: true, breakers: true, breakerRows: 1 };
+  }
+
   function createCabinet(options) {
-    const group = new THREE.Group();
     const w = options.w || 1.7;
     const h = options.h || 2.5;
     const d = options.d || 1.05;
+    const kind = options.kind || 'unit';
+    const group = new THREE.Group();
+    const mats = materials();
 
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: COLORS.steel,
-      metalness: 0.72,
-      roughness: 0.32
+    const bodyMat = new THREE.MeshPhysicalMaterial({
+      color: 0x46586a, metalness: 0.45, roughness: 0.74,
+      roughnessMap: KIT.brushedRoughness(),
+      clearcoat: 0.45, clearcoatRoughness: 0.28, envMapIntensity: 1.05,
+      emissive: 0x000000, emissiveIntensity: 0
     });
-    const darkMetal = new THREE.MeshStandardMaterial({
-      color: COLORS.steelDark,
-      metalness: 0.62,
-      roughness: 0.52
+    const ledMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 1.2, roughness: 0.3, metalness: 0.2
     });
-    const panelMat = new THREE.MeshStandardMaterial({
-      color: 0x101a24,
-      metalness: 0.5,
-      roughness: 0.58
-    });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bodyMat);
-    body.castShadow = true;
-    body.receiveShadow = true;
-    group.add(body);
-
-    const capMat = new THREE.MeshStandardMaterial({
-      color: 0x243747,
-      metalness: 0.6,
-      roughness: 0.42
-    });
-    const capW = 0.08;
-    [-w / 2 + capW / 2, w / 2 - capW / 2].forEach(x => {
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(capW, h, d), capMat);
-      cap.position.x = x;
-      group.add(cap);
+    const plateMat = new THREE.MeshStandardMaterial({
+      color: 0x1b2836, emissive: 0x000000, emissiveIntensity: 0, metalness: 0.55, roughness: 0.5
     });
 
-    const doorH = h * 0.72;
-    const doorW = w * 0.43;
-    const doorZ = d / 2 + 0.035;
-    [-1, 1].forEach(side => {
-      const door = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.05), panelMat);
-      door.position.set(side * w * 0.23, -h * 0.05, doorZ);
-      group.add(door);
-      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.34, 0.05), darkMetal);
-      handle.position.set(side * w * 0.42, -h * 0.02, doorZ + 0.04);
-      group.add(handle);
+    const parts = KIT.cabinetGeometry(w, h, d, cabinetOptionsFor(kind));
+    const perInstance = { paint: bodyMat, led: ledMat, plate: plateMat };
+    Object.keys(parts).forEach(function (key) {
+      const material = perInstance[key] || mats[key];
+      if (!material) return;
+      const mesh = new THREE.Mesh(parts[key], material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      group.add(mesh);
     });
 
-    const ventMat = new THREE.MeshStandardMaterial({
-      color: 0x0b1118,
-      metalness: 0.3,
-      roughness: 0.85
-    });
-    for (let i = 0; i < 5; i += 1) {
-      const vent = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 0.045, 0.02), ventMat);
-      vent.position.set(0, -h * 0.3 + i * 0.11, doorZ + 0.04);
-      group.add(vent);
+    let screenMat = null;
+    if (kind === 'ups') {
+      const screen = createHmiScreen(group, {
+        w: w, label: options.label || 'UPS',
+        screenY: h * 0.3, screenZ: d / 2 + 0.079
+      });
+      screenMat = screen.material;
+      const ledRow = new THREE.Mesh(
+        new THREE.BoxGeometry(w * 0.34, 0.05, 0.02),
+        ledMat
+      );
+      ledRow.position.set(0, h * 0.3 - 0.32, d / 2 + 0.076);
+      group.add(ledRow);
+      createCoolingFan(group, -w * 0.26, h / 2 + 0.16, 0, 0.23, 2.2);
+      createCoolingFan(group, w * 0.26, h / 2 + 0.16, 0, 0.23, 2.2);
     }
 
-    const screen = createHmiScreen(group, {
-      w,
-      h,
-      d,
-      label: options.label || 'UPS'
-    });
-    const screenMat = screen.material;
-
-    const ledMat = new THREE.MeshStandardMaterial({
-      color: COLORS.ok,
-      emissive: COLORS.ok,
-      emissiveIntensity: 1.1
-    });
-    [-1, 0, 1].forEach(offset => {
-      const led = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), ledMat);
-      led.position.set(offset * 0.17, h * 0.4, d / 2 + 0.11);
-      group.add(led);
-    });
-
-    const stripMat = new THREE.MeshStandardMaterial({
-      color: 0x2b3f52,
-      emissive: 0x2b3f52,
-      emissiveIntensity: 0.3
-    });
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, 0.04, 0.3), stripMat);
-    strip.position.set(0, h / 2 + 0.08, 0);
-    group.add(strip);
-
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.08, 0.06, d + 0.08), darkMetal);
-    roof.position.y = h / 2 + 0.02;
-    group.add(roof);
-
-    const footGapX = w / 2 - 0.12;
-    const footGapZ = d / 2 - 0.14;
-    [[-footGapX, -footGapZ], [footGapX, -footGapZ], [-footGapX, footGapZ], [footGapX, footGapZ]].forEach(([fx, fz]) => {
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.16), darkMetal);
-      foot.position.set(fx, -h / 2 - 0.05, fz);
-      group.add(foot);
-    });
-
-    const plateMat = new THREE.MeshStandardMaterial({
-      color: 0x223445,
-      emissive: 0x000000,
-      emissiveIntensity: 0.2
-    });
-    const plate = new THREE.Mesh(new THREE.BoxGeometry(w + 0.26, 0.08, d + 0.3), plateMat);
-    plate.position.set(0, -h / 2 - 0.1, 0);
-    plate.receiveShadow = true;
+    const plate = new THREE.Mesh(
+      new THREE.PlaneGeometry(w * 0.34, w * 0.34 * 0.44),
+      plateMaterial(options.plateTitle || (kind === 'ats' ? 'ATS/STS' : '配电柜'), options.plateSubtitle || '380V 三相', kind === 'ats' ? '#f2b84c' : '#63b3ff')
+    );
+    plate.position.set(-w * 0.02, h * 0.12, d / 2 + 0.079);
     group.add(plate);
 
-    if (options.kind === 'ups' || options.kind === 'output') {
-      const conduitMat = new THREE.MeshStandardMaterial({
-        color: 0x31465a,
-        metalness: 0.7,
-        roughness: 0.35
-      });
-      [-0.42, 0.42].forEach((offset, index) => {
-        const conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.24, 12), conduitMat);
-        conduit.position.set(offset, h / 2 + 0.14, 0);
-        group.add(conduit);
-        const tip = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.05, 0.08, 0.08, 10),
-          new THREE.MeshStandardMaterial({
-            color: index === 0 ? COLORS.info : COLORS.ok,
-            emissive: index === 0 ? COLORS.info : COLORS.ok,
-            emissiveIntensity: 0.9
-          })
-        );
-        tip.position.set(offset, h / 2 + 0.3, 0);
-        group.add(tip);
-      });
-    }
+    addContactShadow(group, w + 1.0, d + 1.0, -h / 2 - 0.14);
 
     group.position.set(options.x, options.y || h / 2, options.z);
     if (options.rotY) group.rotation.y = options.rotY;
@@ -301,93 +386,190 @@
 
     group.userData = {
       routeId: options.routeId || null,
-      kind: options.kind || 'unit',
+      kind: kind,
       label: options.label || '',
-      bodyMat,
-      ledMat,
-      screenMat,
-      plateMat,
+      bodyMat: bodyMat,
+      ledMat: ledMat,
+      screenMat: screenMat,
+      plateMat: plateMat,
       labelSprite: label
     };
-
-    group.traverse(object => {
+    group.traverse(function (object) {
       if (object.isMesh) object.userData.cabinet = group;
     });
-
-    if (options.kind === 'ups' || options.kind === 'output') {
-      createCoolingFan(group, 0, h / 2 + 0.18, -d * 0.32, 0.22, 2.2);
-      createCoolingFan(group, 0, h / 2 + 0.18, d * 0.32, 0.22, 2.2);
-    }
 
     cabinets.push(group);
     scene.add(group);
     return group;
   }
 
+  /* ---------------------------------------------------------------
+   * 油浸式变压器：油箱、散热片、储油柜、瓦斯继电器、套管、冷却风机
+   * --------------------------------------------------------------- */
+  const transformerCache = new Map();
+
+  function transformerGeometry(w, h, d) {
+    const key = w.toFixed(3) + '|' + h.toFixed(3) + '|' + d.toFixed(3);
+    if (transformerCache.has(key)) return transformerCache.get(key);
+    const b = new KIT.Builder();
+
+    const tankW = w * 0.74;
+    const tankH = h * 0.56;
+    const tankD = d * 0.78;
+    const tankY = 0.34 + tankH / 2;
+
+    // 底座轨道与滚轮
+    [-1, 1].forEach(function (side) {
+      b.box('dark', side * w * 0.3, 0.2, 0, 0.18, 0.14, d + 0.6);
+      [-0.52, 0.52].forEach(function (z) {
+        b.cyl('rubber', side * w * 0.3, 0.14, z * d, 0.13, 0.07, [0, 0, Math.PI / 2], 12);
+        b.box('metal', side * w * 0.3, 0.24, z * d, 0.22, 0.16, 0.1);
+      });
+    });
+
+    // 油箱本体 + 加强筋
+    b.box('tank', 0, tankY, 0, tankW, tankH, tankD);
+    for (let i = 0; i < 3; i += 1) {
+      b.box('tank', 0, 0.5 + i * (tankH * 0.42), 0, tankW + 0.03, 0.05, tankD + 0.03);
+    }
+    // 箱盖、螺栓与吊环
+    b.box('dark', 0, tankY + tankH / 2 + 0.035, 0, tankW + 0.09, 0.07, tankD + 0.09);
+    for (let i = 0; i < 5; i += 1) {
+      [-1, 1].forEach(function (side) {
+        b.cyl('metal', side * (tankW / 2 + 0.02), tankY + tankH / 2 + 0.08, -tankD / 2 + 0.14 + i * (tankD - 0.28) / 4, 0.028, 0.05, null, 12);
+      });
+    }
+    [-0.34, 0.34].forEach(function (x) {
+      [-0.3, 0.3].forEach(function (z) {
+        b.cyl('metal', x * w, tankY + tankH / 2 + 0.13, z * d, 0.055, 0.05, [0, 0, Math.PI / 2], 12);
+      });
+    });
+
+    // 两侧散热片组：薄片沿 z 排列，形成波纹散热面
+    [-1, 1].forEach(function (side) {
+      const bx = side * (tankW / 2 + 0.14);
+      const panels = 13;
+      for (let i = 0; i < panels; i += 1) {
+        const pz = -tankD * 0.44 + (i / (panels - 1)) * tankD * 0.88;
+        b.box('tank', bx, tankY, pz, 0.26, tankH * 0.92, 0.028);
+      }
+      // 上下集油管
+      b.cyl('tank', bx, tankY + tankH * 0.46, 0, 0.07, tankD * 0.92, [Math.PI / 2, 0, 0], 12);
+      b.cyl('tank', bx, tankY - tankH * 0.46, 0, 0.07, tankD * 0.92, [Math.PI / 2, 0, 0], 12);
+      // 片间支撑
+      b.box('metal', bx, tankY, 0, 0.3, 0.04, tankD * 0.94);
+      // 冷却风机护罩
+      [-0.28, 0.28].forEach(function (oz) {
+        b.cyl('grille', side * (tankW / 2 + 0.32), tankY + 0.02, oz * d, 0.24, 0.02, [0, 0, 0], 24);
+        for (let k = 0; k < 4; k += 1) {
+          b.box('grille', side * (tankW / 2 + 0.33), tankY + 0.02, oz * d, 0.02, 0.46, 0.02, [0, 0, (k * Math.PI) / 4]);
+        }
+      });
+    });
+
+    // 储油柜（顶部横置圆筒）
+    b.cyl('tank', 0, tankY + tankH / 2 + 0.42, 0, 0.17, tankW * 0.92, [0, 0, Math.PI / 2], 24);
+    [-0.5, 0.5].forEach(function (side) {
+      b.cyl('metal', side * tankW * 0.46, tankY + tankH / 2 + 0.42, 0, 0.075, 0.08, [0, 0, Math.PI / 2], 12);
+    });
+    // 储油柜与主箱之间的连管 + 瓦斯继电器
+    b.cyl('metal', 0, tankY + tankH / 2 + 0.2, 0, 0.055, 0.42, null, 12);
+    b.cyl('dark', 0, tankY + tankH / 2 + 0.2, 0, 0.085, 0.24, [Math.PI / 2, 0, 0], 12);
+    // 油位计
+    b.cyl('metal', tankW * 0.3, tankY + tankH / 2 + 0.42, d * 0.16, 0.05, 0.1, [Math.PI / 2, 0, 0], 12);
+    b.cyl('glass', tankW * 0.3, tankY + tankH / 2 + 0.42, d * 0.2, 0.038, 0.16, [Math.PI / 2, 0, 0], 12);
+    // 呼吸器（硅胶罐）
+    b.cyl('glass', -tankW * 0.42, tankY + tankH / 2 + 0.2, d * 0.2, 0.075, 0.3, null, 12);
+    b.cyl('metal', -tankW * 0.42, tankY + tankH / 2 + 0.38, d * 0.2, 0.06, 0.06, null, 12);
+    b.cyl('accent', -tankW * 0.42, tankY + tankH / 2 + 0.2, d * 0.2, 0.06, 0.16, null, 12);
+    // 防爆管
+    b.cyl('metal', tankW * 0.36, tankY + tankH / 2 + 0.24, -d * 0.2, 0.075, 0.5, null, 12);
+    b.cyl('emergency', tankW * 0.36, tankY + tankH / 2 + 0.5, -d * 0.2, 0.09, 0.08, null, 12);
+
+    // 高压套管（带裙边）
+    [-0.5, 0, 0.5].forEach(function (ox) {
+      const bx = ox * tankW * 0.62;
+      const by = tankY + tankH / 2 + 0.07;
+      const bz = tankD * 0.22;
+      let y = by;
+      for (let i = 0; i < 6; i += 1) {
+        const r = 0.085 - i * 0.008;
+        b.cyl('insulator', bx, y + 0.035, bz, r, 0.04, null, 12);
+        y += 0.062;
+      }
+      b.cyl('metal', bx, y + 0.03, bz, 0.022, 0.12, null, 12);
+      b.sphere('metal', bx, y + 0.1, bz, 0.035, [1, 0.7, 1]);
+    });
+    // 低压套管
+    [-0.62, -0.22, 0.22, 0.62].forEach(function (ox) {
+      const bx = ox * tankW * 0.6;
+      const by = tankY + tankH / 2 + 0.06;
+      const bz = -tankD * 0.26;
+      b.cyl('insulator', bx, by + 0.12, bz, 0.062, 0.24, null, 12);
+      b.cyl('metal', bx, by + 0.27, bz, 0.05, 0.05, null, 12);
+      b.cyl('copper', bx, by + 0.34, bz, 0.026, 0.12, null, 12);
+    });
+
+    // 前后面板：铭牌底座、放油阀、接地端子、警告牌
+    b.box('metal', -tankW * 0.22, tankY + 0.02, tankD / 2 + 0.012, 0.42, 0.28, 0.02);
+    b.cyl('copper', tankW * 0.34, 0.42, tankD / 2 + 0.03, 0.045, 0.16, [Math.PI / 2, 0, 0], 12);
+    b.cyl('copper', -tankW * 0.42, 0.5, tankD / 2, 0.035, 0.09, [Math.PI / 2, 0, 0], 12);
+    b.geo('warning', new THREE.PlaneGeometry(0.3, 0.094), [tankW * 0.3, tankY + 0.06, tankD / 2 + 0.014]);
+    b.box('dark', 0, 0.34, tankD / 2 - 0.02, tankW * 0.9, 0.05, 0.06);
+
+    const parts = b.merge();
+    transformerCache.set(key, parts);
+    return parts;
+  }
+
   function createTransformer(options) {
-    const group = new THREE.Group();
     const w = options.w || 1.9;
     const h = options.h || 2.4;
     const d = options.d || 1.3;
-    const tankMat = new THREE.MeshStandardMaterial({
-      color: 0x2a3b46,
-      metalness: 0.6,
-      roughness: 0.5
-    });
-    const finMat = new THREE.MeshStandardMaterial({
-      color: 0x22313d,
-      metalness: 0.5,
-      roughness: 0.65
-    });
-    const darkMat = new THREE.MeshStandardMaterial({
-      color: 0x101a24,
-      metalness: 0.6,
-      roughness: 0.55
-    });
+    const group = new THREE.Group();
+    const mats = materials();
 
-    const tank = new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, h * 0.72, d), tankMat);
-    tank.position.y = h * 0.36;
-    tank.castShadow = true;
-    tank.receiveShadow = true;
-    group.add(tank);
-
-    for (let i = 0; i < 7; i += 1) {
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(w * 0.05, h * 0.5, d * 0.78), finMat);
-      fin.position.set(-w * 0.43, h * 0.33, -d * 0.28 + i * (d * 0.76 / 6));
-      group.add(fin);
-    }
-
-    const bushingMat = new THREE.MeshStandardMaterial({
-      color: 0x8fa2b8,
-      roughness: 0.4
+    const tankMat = new THREE.MeshPhysicalMaterial({
+      color: 0x5a6a78, metalness: 0.5, roughness: 0.6,
+      roughnessMap: KIT.brushedRoughness(),
+      clearcoat: 0.3, clearcoatRoughness: 0.35, envMapIntensity: 0.95,
+      emissive: 0x000000, emissiveIntensity: 0
     });
-    [-0.18, 0, 0.18].forEach(offset => {
-      const bushing = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.42, 12), bushingMat);
-      bushing.position.set(offset * w * 0.52, h * 0.79, d * 0.18);
-      group.add(bushing);
-    });
-
-    const conservator = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, w * 0.48, 14), finMat);
-    conservator.rotation.z = Math.PI / 2;
-    conservator.position.set(0, h * 0.9, d * 0.14);
-    group.add(conservator);
-
     const plateMat = new THREE.MeshStandardMaterial({
-      color: 0x223445,
-      emissive: 0x000000,
-      emissiveIntensity: 0.2
+      color: 0x1b2836, emissive: 0x000000, emissiveIntensity: 0, metalness: 0.55, roughness: 0.5
     });
-    const base = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.1, d + 0.34), plateMat);
-    base.position.y = 0.04;
-    base.receiveShadow = true;
-    group.add(base);
 
-    const feetMat = darkMat;
-    [[-w * 0.35, -d * 0.4], [w * 0.35, -d * 0.4], [-w * 0.35, d * 0.4], [w * 0.35, d * 0.4]].forEach(([fx, fz]) => {
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.2), feetMat);
-      foot.position.set(fx, 0.1, fz);
-      group.add(foot);
+    const parts = transformerGeometry(w, h, d);
+    const perInstance = { tank: tankMat, plate: plateMat };
+    Object.keys(parts).forEach(function (key) {
+      const material = perInstance[key] || mats[key];
+      if (!material) return;
+      const mesh = new THREE.Mesh(parts[key], material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      group.add(mesh);
     });
+
+    // 冷却风机（侧吹）
+    [-1, 1].forEach(function (side) {
+      [-0.34, 0.34].forEach(function (oz) {
+        const holder = new THREE.Group();
+        holder.position.set(side * (w * 0.37 + 0.34), 0.34 + h * 0.28, oz * d);
+        holder.rotation.z = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+        group.add(holder);
+        createCoolingFan(holder, 0, 0, 0, 0.21, 1.9);
+      });
+    });
+
+    // 铭牌
+    const plate = new THREE.Mesh(
+      new THREE.PlaneGeometry(w * 0.24, w * 0.24 * 0.44),
+      plateMaterial(options.name || '干式变压器', options.model || 'SCB13 · 10kV/0.4kV', '#63b3ff')
+    );
+    plate.position.set(-w * 0.22, 0.34 + h * 0.28 + 0.02, d * 0.39 + 0.026);
+    group.add(plate);
+
+    addContactShadow(group, w + 1.4, d + 1.4, 0.02);
 
     const label = makeLabel(options.label || '');
     label.position.set(0, h + 0.55, 0);
@@ -403,92 +585,96 @@
       bodyMat: tankMat,
       ledMat: null,
       screenMat: null,
-      plateMat,
+      plateMat: plateMat,
       labelSprite: label
     };
-    group.traverse(object => {
+    group.traverse(function (object) {
       if (object.isMesh) object.userData.cabinet = group;
     });
+
     cabinets.push(group);
     scene.add(group);
     return group;
   }
 
+  /* ---------------------------------------------------------------
+   * 蓄电池组：机架 + 单体电池 + 铜排连接 + 状态灯
+   * --------------------------------------------------------------- */
+  const batteryCache = new Map();
+
+  function batteryGeometry() {
+    if (batteryCache.has('v2')) return batteryCache.get('v2');
+    const b = new KIT.Builder();
+    const postX = [-0.62, 0, 0.62];
+    const rowY = [0.42, 1.12, 1.82];
+
+    // 绝缘垫与机架
+    b.box('rubber', 0, 0.03, 0, 1.8, 0.06, 1.34);
+    [-1, 1].forEach(function (sx) {
+      [-1, 1].forEach(function (sz) {
+        b.box('metal', sx * 0.86, 1.1, sz * 0.6, 0.07, 2.2, 0.07);
+      });
+    });
+    rowY.forEach(function (y, index) {
+      b.box('metal', 0, y - 0.34, 0, 1.78, 0.06, 1.24);
+      if (index < 2) {
+        b.box('metal', 0, (y + rowY[index + 1]) / 2 - 0.34, 0, 1.78, 0.05, 0.08);
+      }
+    });
+    b.box('metal', 0, 2.26, 0, 1.78, 0.07, 1.24);
+
+    // 单体电池
+    rowY.forEach(function (y, rowIndex) {
+      postX.forEach(function (x, colIndex) {
+        b.box('cell', x, y, 0, 0.52, 0.62, 0.86);
+        b.box('dark', x, y + 0.33, 0, 0.46, 0.06, 0.78);
+        [-0.16, 0.16].forEach(function (tz) {
+          b.cyl('copper', x + 0.16, y + 0.38, tz * 0.5, 0.4 ? 0.032 : 0.032, 0.05, null, 12);
+        });
+        b.box('accent', x - 0.14, y + 0.36, 0, 0.12, 0.02, 0.4);
+        // 同排电池之间的连接铜排
+        if (colIndex < 2) {
+          b.box('copper', x + 0.31, y + 0.36, 0, 0.12, 0.03, 0.09);
+        }
+        // 层间竖向铜排
+        if (colIndex === 2 && rowIndex < 2) {
+          b.box('copper', x + 0.26, y + 0.37, 0, 0.05, 0.72, 0.06);
+        }
+      });
+    });
+
+    // 顶部引出端子
+    b.cyl('emergency', -0.66, 2.4, -0.3, 0.06, 0.14, null, 12);
+    b.cyl('metal', 0.66, 2.4, -0.3, 0.06, 0.14, null, 12);
+
+    const parts = b.merge();
+    batteryCache.set('v2', parts);
+    return parts;
+  }
+
   function createBatteryBank(options) {
     const group = new THREE.Group();
-    const packMat = new THREE.MeshStandardMaterial({
-      color: 0x1c2a38,
-      metalness: 0.6,
-      roughness: 0.45
-    });
-    const topMat = new THREE.MeshStandardMaterial({
-      color: COLORS.ok,
-      emissive: COLORS.ok,
-      emissiveIntensity: 0.9
-    });
-    for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        const pack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.9), packMat);
-        pack.position.set(-0.55 + col * 0.55, 0.35 + row * 0.65, 0);
-        pack.castShadow = true;
-        group.add(pack);
-        const top = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.07, 0.6), topMat);
-        top.position.set(-0.55 + col * 0.55, 0.65 + row * 0.65, 0);
-        group.add(top);
-      }
-    }
-
-    const busbarMat = new THREE.MeshStandardMaterial({
-      color: 0xc2410c,
-      metalness: 0.75,
-      roughness: 0.3
-    });
-    for (let row = 0; row < 3; row += 1) {
-      const rowBar = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.06, 0.08), busbarMat);
-      rowBar.position.set(0, 0.65 + row * 0.65 + 0.06, -0.42);
-      group.add(rowBar);
-    }
-    for (let row = 0; row < 2; row += 1) {
-      const y1 = 0.65 + row * 0.65 + 0.06;
-      const y2 = 0.65 + (row + 1) * 0.65 + 0.06;
-      const link = new THREE.Mesh(new THREE.BoxGeometry(0.08, y2 - y1, 0.08), busbarMat);
-      link.position.set(-0.78, (y1 + y2) / 2, -0.42);
-      group.add(link);
-    }
-    const terminalMat = new THREE.MeshStandardMaterial({
-      color: 0xff5a5a,
-      emissive: 0xff5a5a,
-      emissiveIntensity: 0.8
-    });
-    const terminalMat2 = new THREE.MeshStandardMaterial({
-      color: 0x222a33,
-      metalness: 0.8,
-      roughness: 0.35
-    });
-    [-0.92, 0.92].forEach((offset, index) => {
-      const terminal = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), index === 0 ? terminalMat : terminalMat2);
-      terminal.position.set(offset, 2.05, -0.42);
-      group.add(terminal);
+    const mats = materials();
+    const ledMat = new THREE.MeshStandardMaterial({
+      color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 1.1, roughness: 0.3, metalness: 0.2
     });
 
-    const frameMat = new THREE.MeshStandardMaterial({
-      color: 0x22313d,
-      metalness: 0.55,
-      roughness: 0.55
+    const parts = batteryGeometry();
+    const perInstance = { led: ledMat };
+    Object.keys(parts).forEach(function (key) {
+      const material = perInstance[key] || mats[key];
+      if (!material) return;
+      const mesh = new THREE.Mesh(parts[key], material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      group.add(mesh);
     });
-    [-0.95, 0.95].forEach(zSide => {
-      const side = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.4, 1.45), frameMat);
-      side.position.set(0, 1.2, zSide);
-      side.castShadow = true;
-      group.add(side);
-    });
-    const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.12, 0.14), frameMat);
-    topBar.position.set(0, 2.4, -0.45);
-    group.add(topBar);
-    const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.12, 1.6), frameMat);
-    base.position.y = 0.06;
-    base.receiveShadow = true;
-    group.add(base);
+
+    const led = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.03), ledMat);
+    led.position.set(0, 2.0, 0.63);
+    group.add(led);
+
+    addContactShadow(group, 2.6, 2.1, 0.04);
 
     const label = makeLabel(options.label || '');
     label.position.set(0, 3.0, 0);
@@ -500,12 +686,12 @@
     group.userData = {
       kind: 'battery',
       label: options.label || '',
-      ledMat: topMat,
+      ledMat: ledMat,
       screenMat: null,
       plateMat: null,
       labelSprite: label
     };
-    group.traverse(object => {
+    group.traverse(function (object) {
       if (object.isMesh) object.userData.cabinet = group;
     });
     cabinets.push(group);
@@ -513,162 +699,201 @@
     return group;
   }
 
-  function createBatteryRoom() {
-    const cx = 22.0;
-    const cz = 5.0;
+  /* ---------------------------------------------------------------
+   * 电池间：砖墙 + 观察窗 + 顶部母线 + 出入标识
+   * --------------------------------------------------------------- */
+  function createBatteryRoom(centerX, centerZ, title) {
+    const cx = centerX === undefined ? 22.0 : centerX;
+    const cz = centerZ === undefined ? 5.0 : centerZ;
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x1c2a38,
-      metalness: 0.6,
-      roughness: 0.5
+      color: 0x3a4a5a, metalness: 0.25, roughness: 0.78, envMapIntensity: 0.6
     });
-    const glassMat = new THREE.MeshStandardMaterial({
-      color: 0x0d2231,
-      transparent: true,
-      opacity: 0.3,
-      metalness: 0.45,
-      roughness: 0.25,
-      emissive: COLORS.info,
-      emissiveIntensity: 0.12
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: 0x3a4b5c, metalness: 0.65, roughness: 0.42, envMapIntensity: 0.9
     });
-    const frameMat = new THREE.MeshStandardMaterial({
-      color: 0x2a3c4c,
-      metalness: 0.55,
-      roughness: 0.45
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x142c3d, transparent: true, opacity: 0.34,
+      metalness: 0.1, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.05,
+      emissive: COLORS.info, emissiveIntensity: 0.08
     });
 
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.12, 4.8), wallMat);
-    floor.position.set(cx, 0.06, cz);
+    const floor = new THREE.Mesh(
+      new THREE.BoxGeometry(5.8, 0.14, 4.8),
+      new THREE.MeshStandardMaterial({ color: 0x1a2530, roughness: 0.6, metalness: 0.3, envMapIntensity: 0.7 })
+    );
+    floor.position.set(cx, 0.07, cz);
     floor.receiveShadow = true;
     scene.add(floor);
 
     const back = new THREE.Mesh(new THREE.BoxGeometry(5.8, 3.0, 0.12), wallMat);
-    back.position.set(cx, 1.5, cz + 2.3);
+    back.position.set(cx, 1.5, cz - 2.3);
     back.castShadow = true;
+    back.receiveShadow = true;
     scene.add(back);
 
-    [-2.9, 2.9].forEach(offset => {
+    [-2.9, 2.9].forEach(function (offset) {
       const side = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.0, 4.8), wallMat);
       side.position.set(cx + offset, 1.5, cz);
       side.castShadow = true;
+      side.receiveShadow = true;
       scene.add(side);
     });
 
-    const front = new THREE.Mesh(new THREE.BoxGeometry(5.8, 3.0, 0.12), glassMat);
-    front.position.set(cx, 1.5, cz - 2.3);
-    front.castShadow = true;
-    scene.add(front);
-
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(6.0, 0.12, 5.0), wallMat);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(6.0, 0.06, 5.0), glassMat);
     roof.position.set(cx, 3.1, cz);
-    roof.castShadow = true;
     scene.add(roof);
+    [-2.95, 2.95].forEach(function (oz) {
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(6.05, 0.1, 0.1), trimMat);
+      beam.position.set(cx, 3.13, cz + oz);
+      scene.add(beam);
+    });
+    [-2.85, 0, 2.85].forEach(function (ox) {
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 5.05), trimMat);
+      beam.position.set(cx + ox, 3.13, cz);
+      scene.add(beam);
+    });
 
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.2, 0.1), frameMat);
-    frame.position.set(cx, 1.5, cz - 2.24);
+    // 前墙分三段，中间留出观察窗
+    [1.9, -1.9].forEach(function (offset) {
+      const pier = new THREE.Mesh(new THREE.BoxGeometry(2.0, 3.0, 0.12), wallMat);
+      pier.position.set(cx + offset, 1.5, cz + 2.3);
+      pier.castShadow = true;
+      pier.receiveShadow = true;
+      scene.add(pier);
+    });
+    const lintel = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.9, 0.12), wallMat);
+    lintel.position.set(cx, 2.55, cz + 2.3);
+    lintel.castShadow = true;
+    scene.add(lintel);
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.7, 0.12), wallMat);
+    sill.position.set(cx, 0.35, cz + 2.3);
+    sill.castShadow = true;
+    scene.add(sill);
+    const glass = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.7, 0.06), glassMat);
+    glass.position.set(cx, 1.75, cz + 2.3);
+    scene.add(glass);
+    // 窗框
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.8, 0.16), trimMat);
+    frame.position.set(cx, 1.75, cz + 2.32);
     scene.add(frame);
+    const frameHole = new THREE.Mesh(new THREE.BoxGeometry(1.78, 1.58, 0.2), new THREE.MeshBasicMaterial({ colorWrite: false }));
+    frameHole.position.set(cx, 1.75, cz + 2.33);
+    scene.add(frameHole);
 
-    const label = makeLabel('电池间', 2.8);
-    label.position.set(cx, 3.75, cz - 2.3);
+    const label = makeLabel(title || '电池间', 2.8);
+    label.position.set(cx, 3.6, cz + 2.3);
     scene.add(label);
 
     const sign = makeLabel('蓄电池组 · 闲人免进', 2.2);
-    sign.position.set(cx, 0.8, cz - 2.24);
+    sign.position.set(cx, 0.5, cz + 2.4);
     scene.add(sign);
 
     const warning = new THREE.Mesh(
-      new THREE.BoxGeometry(4.2, 0.04, 0.22),
+      new THREE.BoxGeometry(1.7, 0.04, 0.2),
       new THREE.MeshStandardMaterial({ color: COLORS.warn, emissive: COLORS.warn, emissiveIntensity: 0.9 })
     );
-    warning.position.set(cx, 0.16, cz - 2.05);
+    warning.position.set(cx, 0.72, cz + 2.32);
     scene.add(warning);
 
+    // 室内顶部灯带：让电池组在暗色场景里也看得清
+    const lampMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, emissive: 0xdcefff, emissiveIntensity: 1.2, roughness: 0.25
+    });
+    [-1.2, 1.2].forEach(function (offset) {
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.24), lampMat);
+      lamp.position.set(cx + offset, 2.92, cz + 0.6);
+      scene.add(lamp);
+    });
+    const roomLight = new THREE.PointLight(0xdcefff, 0.55, 9, 2);
+    roomLight.position.set(cx, 2.5, cz + 0.4);
+    scene.add(roomLight);
+
     const busbarMat = new THREE.MeshStandardMaterial({
-      color: COLORS.warn,
-      emissive: COLORS.warn,
-      emissiveIntensity: 0.55,
-      metalness: 0.7,
-      roughness: 0.35
+      color: COLORS.warn, emissive: COLORS.warn, emissiveIntensity: 0.5, metalness: 0.7, roughness: 0.35
     });
     const roomBus = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.1, 0.24), busbarMat);
-    roomBus.position.set(cx, 2.78, cz);
+    roomBus.position.set(cx, 2.86, cz);
     scene.add(roomBus);
+    // 母线绝缘支撑
+    [cx - 1.4, cx, cx + 1.4].forEach(function (x) {
+      const support = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, 0.22, 12),
+        new THREE.MeshPhysicalMaterial({ color: 0x6d7a86, roughness: 0.34, clearcoat: 1, clearcoatRoughness: 0.2 })
+      );
+      support.position.set(x, 3.0, cz);
+      scene.add(support);
+    });
 
-    [20.6, 22.0, 23.4].forEach(x => {
+    [cx - 1.4, cx, cx + 1.4].forEach(function (x) {
       const riser = createPath([
         new THREE.Vector3(x, 2.5, cz),
-        new THREE.Vector3(x, 2.76, cz)
-      ], COLORS.warn, 0.04);
+        new THREE.Vector3(x, 2.84, cz)
+      ], COLORS.warn, 0.035);
       scene.add(riser.mesh);
     });
   }
 
+  /* ---------------------------------------------------------------
+   * 末端负载柜（PDU）
+   * --------------------------------------------------------------- */
   function createLoadBlock(options) {
     const group = new THREE.Group();
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x16222f,
-      metalness: 0.55,
-      roughness: 0.45
-    });
-    const darkMetal = new THREE.MeshStandardMaterial({
-      color: COLORS.steelDark,
-      metalness: 0.62,
-      roughness: 0.5
-    });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.55, 1.9, 1.25), bodyMat);
-    body.position.y = 0.95;
-    body.castShadow = true;
-    body.receiveShadow = true;
-    group.add(body);
+    const mats = materials();
+    const w = 1.6;
+    const h = 1.95;
+    const d = 1.25;
 
-    const front = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 0.06), darkMetal);
-    front.position.set(0, 0.95, 0.66);
-    group.add(front);
-    const ventMat = new THREE.MeshStandardMaterial({
-      color: 0x0b1118,
-      metalness: 0.3,
-      roughness: 0.85
+    const bodyMat = new THREE.MeshPhysicalMaterial({
+      color: 0x36485a, metalness: 0.45, roughness: 0.7,
+      roughnessMap: KIT.brushedRoughness(),
+      clearcoat: 0.4, clearcoatRoughness: 0.3, envMapIntensity: 1
     });
-    for (let i = 0; i < 4; i += 1) {
-      const vent = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.05, 0.02), ventMat);
-      vent.position.set(0, 0.65 + i * 0.22, 0.71);
-      group.add(vent);
-    }
-
     const loadMat = new THREE.MeshStandardMaterial({
-      color: COLORS.ok,
-      emissive: COLORS.ok,
-      emissiveIntensity: 0.55
+      color: COLORS.ok, emissive: COLORS.ok, emissiveIntensity: 0.6, roughness: 0.35, metalness: 0.2
     });
-    const top = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.08, 1.0), loadMat);
-    top.position.y = 1.95;
-    group.add(top);
+    const plateMat = new THREE.MeshStandardMaterial({
+      color: 0x1b2836, emissive: 0x000000, emissiveIntensity: 0, metalness: 0.55, roughness: 0.5
+    });
 
-    const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 1.4), darkMetal);
-    base.position.y = 0.04;
-    base.receiveShadow = true;
-    group.add(base);
+    const parts = KIT.cabinetGeometry(w, h, d, {
+      doorStyle: 'single', meters: true, fans: false, breakers: true, breakerRows: 2
+    });
+    const perInstance = { paint: bodyMat, plate: plateMat };
+    Object.keys(parts).forEach(function (key) {
+      const material = perInstance[key] || mats[key];
+      if (!material) return;
+      const mesh = new THREE.Mesh(parts[key], material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+    });
 
-    const label = makeLabel(options.label || '', 2.0);
-    label.position.set(0, 2.45, 0);
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(w * 0.86, 0.06, 0.06), loadMat);
+    strip.position.set(0, h / 2 - 0.1, d / 2 + 0.05);
+    group.add(strip);
+
+    addContactShadow(group, w + 1.0, d + 1.0, -h / 2 - 0.14);
+
+    group.position.set(options.x, h / 2, options.z);
+    const label = makeLabel(options.label || '');
+    label.position.set(0, h / 2 + 0.62, 0);
     label.userData.cabinet = group;
     label.visible = false;
     group.add(label);
 
-    group.position.set(options.x, 0, options.z);
     group.userData = {
       routeId: options.routeId || null,
       kind: 'load',
       label: options.label || '',
-      loadMat,
+      loadMat: loadMat,
       ledMat: loadMat,
       screenMat: null,
-      plateMat: null,
+      plateMat: plateMat,
       labelSprite: label
     };
-    group.traverse(object => {
+    group.traverse(function (object) {
       if (object.isMesh) object.userData.cabinet = group;
     });
-
     cabinets.push(group);
     scene.add(group);
     return group;
@@ -680,9 +905,10 @@
     const material = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
-      emissiveIntensity: 0.5,
+      emissiveIntensity: 0.26,
+      envMapIntensity: 0.2,
       transparent: true,
-      opacity: 0.92
+      opacity: 0.9
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.userData.curve = curve;
@@ -742,9 +968,10 @@
     const material = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
-      emissiveIntensity: 0.5,
+      emissiveIntensity: 0.26,
+      envMapIntensity: 0.2,
       transparent: true,
-      opacity: 0.92
+      opacity: 0.9
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.userData.curve = curve;
@@ -758,23 +985,25 @@
       const outX = tx - 0.55;
       const main = createAngledPath([
         new THREE.Vector3(tx, 2.4, -4.4),
-        new THREE.Vector3(tx, 8.0, -4.4),
-        new THREE.Vector3(tx, 8.0, -2.2),
-        new THREE.Vector3(upsX, 8.0, -0.2),
+        new THREE.Vector3(tx, 5.7, -4.4),
+        new THREE.Vector3(tx, 5.7, -2.2),
+        new THREE.Vector3(upsX, 5.7, -0.2),
         new THREE.Vector3(upsX, 2.5, -0.2),
-        new THREE.Vector3(upsX, 8.0, -0.2),
-        new THREE.Vector3(outX, 8.0, 2.0),
+        new THREE.Vector3(upsX, 5.7, -0.2),
+        new THREE.Vector3(outX, 5.7, 2.0),
         new THREE.Vector3(outX, 2.5, 2.0),
-        new THREE.Vector3(outX, 8.0, 2.0),
-        new THREE.Vector3(tx, 8.0, 4.2),
+        new THREE.Vector3(outX, 5.7, 2.0),
+        new THREE.Vector3(tx, 5.7, 4.2),
         new THREE.Vector3(tx, 1.95, 4.2)
       ], COLORS.info, 0.07);
 
+      // 就近接入电池间：西侧区域走西电池间，东侧区域走东电池间
+      const roomX = upsX <= 0 ? -22.0 : 22.0;
       const battery = createAngledPath([
-        new THREE.Vector3(22.0, 2.8, 5.0),
-        new THREE.Vector3(22.0, 8.0, 5.0),
-        new THREE.Vector3(22.0, 8.0, -0.2),
-        new THREE.Vector3(upsX, 8.0, -0.2),
+        new THREE.Vector3(roomX, 2.8, 5.0),
+        new THREE.Vector3(roomX, 5.7, 5.0),
+        new THREE.Vector3(roomX, 5.7, -0.2),
+        new THREE.Vector3(upsX, 5.7, -0.2),
         new THREE.Vector3(upsX, 2.5, -0.2)
       ], COLORS.warn, 0.055);
 
@@ -834,8 +1063,8 @@
 
   function buildBusParticles() {
     const points = [
-      new THREE.Vector3(-11.4, 8.1, -2.2),
-      new THREE.Vector3(14.2, 8.1, -2.2)
+      new THREE.Vector3(-11.4, 5.6, -2.2),
+      new THREE.Vector3(14.2, 5.6, -2.2)
     ];
     mainBusCurve = new THREE.CatmullRomCurve3(points);
     for (let i = 0; i < 12; i += 1) {
@@ -863,7 +1092,7 @@
     });
     const length = toX - fromX;
     const tray = new THREE.Mesh(new THREE.BoxGeometry(length, 0.16, 0.36), trayMat);
-    tray.position.set((fromX + toX) / 2, 8.35, z);
+    tray.position.set((fromX + toX) / 2, 5.85, z);
     tray.castShadow = true;
     scene.add(tray);
 
@@ -873,8 +1102,8 @@
       roughness: 0.45
     });
     for (let x = fromX + 1.6; x <= toX - 1.2; x += 3) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 6.95, 0.12), postMat);
-      post.position.set(x, 4.8, z);
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 5.5, 0.1), postMat);
+      post.position.set(x, 2.75, z);
       scene.add(post);
     }
   }
@@ -907,26 +1136,41 @@
   }
 
   function buildScene() {
+    const floorMaps = KIT.floorMaps();
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(60, 26),
-      new THREE.MeshStandardMaterial({ color: 0x0a1119, roughness: 0.92, metalness: 0.1 })
+      new THREE.PlaneGeometry(64, 30),
+      new THREE.MeshStandardMaterial({
+        map: floorMaps.map,
+        roughnessMap: floorMaps.roughnessMap,
+        color: 0xd8e4f0,
+        roughness: 0.52,
+        metalness: 0.34,
+        envMapIntensity: 0.9
+      })
     );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.y = 0.01;
+    floor.position.y = 0.005;
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const grid = new THREE.GridHelper(60, 60, 0x2b3d50, 0x182330);
-    grid.position.y = 0.02;
-    scene.add(grid);
-
     const platform = new THREE.Mesh(
-      new THREE.BoxGeometry(52, 0.28, 20),
-      new THREE.MeshStandardMaterial({ color: 0x141f2b, roughness: 0.62, metalness: 0.35 })
+      new THREE.BoxGeometry(52, 0.3, 20),
+      new THREE.MeshStandardMaterial({
+        color: 0x24323f, roughness: 0.72, metalness: 0.22, envMapIntensity: 0.32
+      })
     );
-    platform.position.set(0, 0.14, -0.1);
+    platform.position.set(0, 0.15, -0.1);
     platform.receiveShadow = true;
     scene.add(platform);
+
+    const stripMat = new THREE.MeshStandardMaterial({
+      color: 0xe8c14a, emissive: 0x4a3a08, emissiveIntensity: 0.5, roughness: 0.6, metalness: 0.2
+    });
+    [9.9, -10.1].forEach(function (pz) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(51.6, 0.05, 0.12), stripMat);
+      strip.position.set(0, 0.31, pz);
+      scene.add(strip);
+    });
 
     const backdrop = new THREE.Mesh(
       new THREE.BoxGeometry(36, 7, 0.4),
@@ -1002,8 +1246,8 @@
       const cable = createPath([
         new THREE.Vector3(-15.5, 3.2, feeder.z),
         new THREE.Vector3(-14.9, 3.0, feeder.z + (index === 0 ? 0.35 : -0.35)),
-        new THREE.Vector3(-14.4, 8.2, feeder.z),
-        new THREE.Vector3(feeder.busX, 8.2, -2.2)
+        new THREE.Vector3(-14.4, 5.7, feeder.z),
+        new THREE.Vector3(feeder.busX, 5.7, -2.2)
       ], 0x2b3f52, 0.03);
       scene.add(cable.mesh);
       const label = makeLabel(feeder.label, 2.2);
@@ -1015,7 +1259,7 @@
       new THREE.BoxGeometry(28, 0.28, 0.5),
       new THREE.MeshStandardMaterial({ color: 0x223445, metalness: 0.5, roughness: 0.5 })
     );
-    busBody.position.set(1.6, 8.1, -2.2);
+    busBody.position.set(1.6, 5.6, -2.2);
     busBody.castShadow = true;
     busBody.receiveShadow = true;
     scene.add(busBody);
@@ -1028,7 +1272,7 @@
       opacity: 0.85
     });
     const busGlow = new THREE.Mesh(new THREE.BoxGeometry(27, 0.08, 0.22), mainBusMat);
-    busGlow.position.set(1.6, 8.17, -2.2);
+    busGlow.position.set(1.6, 5.67, -2.2);
     scene.add(busGlow);
 
     const postMat = new THREE.MeshStandardMaterial({
@@ -1037,8 +1281,8 @@
       roughness: 0.45
     });
     for (let x = -11; x <= 14.2; x += 2.8) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, 7.9, 0.14), postMat);
-      post.position.set(x, 4.0, -2.2);
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 5.4, 0.12), postMat);
+      post.position.set(x, 2.7, -2.2);
       scene.add(post);
     }
 
@@ -1049,14 +1293,14 @@
     });
     for (let x = -11; x <= 14.2; x += 2.8) {
       const chevron = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 10), chevronMat);
-      chevron.position.set(x, 8.27, -2.2);
+      chevron.position.set(x, 5.77, -2.2);
       chevron.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
       scene.add(chevron);
       busChevrons.push(chevron);
     }
 
     const busLabel = makeLabel('ATS 双路切换母线', 3.2);
-    busLabel.position.set(1.6, 8.75, -2.2);
+    busLabel.position.set(1.6, 6.3, -2.2);
     scene.add(busLabel);
 
     createCabinet({
@@ -1076,7 +1320,9 @@
         x: tx,
         z: -4.4,
         label: `${route.code} · 变压器`,
-        routeId: route.id
+        routeId: route.id,
+        name: `${index + 1}# 油浸式变压器`,
+        model: `${route.code} · 10kV/0.4kV`
       });
       createCabinet({
         x: tx + 0.55,
@@ -1100,11 +1346,18 @@
       });
     });
 
-    [20.6, 22.0, 23.4].forEach((x, index) => {
-      createBatteryBank({
-        x,
-        z: 5.0,
-        label: `铅酸阀控蓄电池组 ${index + 1}`
+    // 东、西两个电池间，各布置 3 组铅酸阀控蓄电池组
+    const BATTERY_ROOMS = [
+      { x: 22.0, z: 5.0, title: '东电池间', caption: '东侧电池组区' },
+      { x: -22.0, z: 5.0, title: '西电池间', caption: '西侧电池组区' }
+    ];
+    BATTERY_ROOMS.forEach((room, roomIndex) => {
+      [-1.4, 0, 1.4].forEach((offset, index) => {
+        createBatteryBank({
+          x: room.x + offset,
+          z: room.z,
+          label: `铅酸阀控蓄电池组 ${roomIndex * 3 + index + 1}（${room.title}）`
+        });
       });
     });
 
@@ -1112,27 +1365,33 @@
       addCableTray(z, -12.2, 13.5);
     });
     addCableTray(5.0, 19.5, 24.5);
+    addCableTray(5.0, -24.5, -19.5);
 
     ROUTES.forEach((route, index) => {
       const tx = transformerX(index);
       const upsX = tx + 0.55;
       const outX = tx - 0.55;
-      addCableDrop(tx, 8.38, -4.4, tx, 2.4, -4.4, 0x3b5a75);
-      addCableDrop(upsX, 8.38, -0.2, upsX, 2.55, -0.2, 0x3b5a75);
-      addCableDrop(outX, 8.38, 2.0, outX, 2.55, 2.0, 0x3b5a75);
-      addCableDrop(tx, 8.38, 4.2, tx, 1.95, 4.2, 0x3b5a75);
-      addTopJunctionBox(upsX, 2.6, -0.2, COLORS.info);
-      addTopJunctionBox(outX, 2.6, 2.0, COLORS.ok);
+      addCableDrop(tx, 5.88, -4.4, tx, 2.25, -4.4, 0x2a4256);
+      addCableDrop(upsX, 5.88, -0.2, upsX, 2.62, -0.2, 0x2a4256);
+      addCableDrop(outX, 5.88, 2.0, outX, 2.62, 2.0, 0x2a4256);
+      addCableDrop(tx, 5.88, 4.2, tx, 2.02, 4.2, 0x2a4256);
+      addTopJunctionBox(upsX, 2.68, -0.2, COLORS.info);
+      addTopJunctionBox(outX, 2.68, 2.0, COLORS.ok);
     });
 
-    [20.6, 22.0, 23.4].forEach(x => {
-      addCableDrop(x, 8.38, 5.0, x, 2.45, 5.0, 0x3b5a75);
+    BATTERY_ROOMS.forEach(room => {
+      [-1.4, 0, 1.4].forEach(offset => {
+        const x = room.x + offset;
+        addCableDrop(x, 5.88, room.z, x, 2.52, room.z, 0x2a4256);
+      });
     });
 
-    const batteryCaption = makeLabel('电池组区', 3.0);
-    batteryCaption.position.set(22.0, 3.4, 5.0);
-    scene.add(batteryCaption);
-    createBatteryRoom();
+    BATTERY_ROOMS.forEach(room => {
+      const batteryCaption = makeLabel(room.caption, 2.8);
+      batteryCaption.position.set(room.x, 3.5, room.z);
+      scene.add(batteryCaption);
+      createBatteryRoom(room.x, room.z, room.title);
+    });
 
     const caption = makeLabel('1#-10# 变压器阵列', 3.2);
     caption.position.set(-10.3, 3.5, -4.4);
@@ -1195,29 +1454,41 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.0;
+    KIT.installEnvironment(renderer, scene);
     renderer.domElement.setAttribute('aria-label', '配电架构 3D 模拟实物展示');
     container.appendChild(renderer.domElement);
 
     camera = new THREE.PerspectiveCamera(44, 1, 0.1, 120);
-    camera.position.set(0, 19, 34);
+    camera.position.set(4, 16.5, 32);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 2.5, -0.3);
+    controls.target.set(1.5, 2.0, 0.3);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.minDistance = 9;
     controls.maxDistance = 100;
     controls.maxPolarAngle = 1.42;
 
-    const hemi = new THREE.HemisphereLight(0x9ab8d6, 0x0a1119, 1.0);
+    const hemi = new THREE.HemisphereLight(0xa8c4dd, 0x0a1119, 1.05);
     scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-    sun.position.set(9, 17, 11);
+    const sun = new THREE.DirectionalLight(0xf4f8ff, 1.15);
+    sun.position.set(14, 20, 16);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
     sun.shadow.mapSize.height = 2048;
+    sun.shadow.camera.left = -28;
+    sun.shadow.camera.right = 28;
+    sun.shadow.camera.top = 22;
+    sun.shadow.camera.bottom = -22;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 80;
+    sun.shadow.bias = -0.0005;
+    sun.shadow.normalBias = 0.02;
     scene.add(sun);
+    const fill = new THREE.DirectionalLight(0x9dc4ff, 0.46);
+    fill.position.set(-18, 14, -12);
+    scene.add(fill);
     const blue = new THREE.PointLight(COLORS.info, 0.65, 34);
     blue.position.set(-10, 6, -4);
     scene.add(blue);
